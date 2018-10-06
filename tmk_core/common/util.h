@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LSTR(s) XLSTR(s)
 #define XLSTR(s) L ## #s
 // convert to string
-#define STR(s) XSTR(s)
-#define XSTR(s) #s
+#define STR(...) XSTR(__VA_ARGS__)
+#define XSTR(...) #__VA_ARGS__
 
 
 uint8_t bitpop(uint8_t bits);

@@ -544,7 +544,7 @@ static void dis_init(void) {
 
   memset(&dis_init_obj, 0, sizeof(dis_init_obj));
 
-  ble_srv_ascii_to_utf8(&dis_init_obj.manufact_name_str, STR(MANUFACTURE));
+  ble_srv_ascii_to_utf8(&dis_init_obj.manufact_name_str, STR(MANUFACTURER));
   dis_init_obj.p_pnp_id = &pnp_id;
 
   BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&dis_init_obj.dis_attr_md.read_perm);
