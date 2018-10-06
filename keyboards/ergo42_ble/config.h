@@ -1,4 +1,7 @@
 /*
+Copyright 2012 Jun Wako <wakojun@gmail.com>
+Copyright 2015 Jack Humbert
+Copyright 2017 Biacco42
 Copyright 2018 Sekigon
 
 This program is free software: you can redistribute it and/or modify
@@ -19,14 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CONFIG_H
 
 /* USB Device descriptor parameter */
-#define VENDOR_ID       0xFEED
-#define PRODUCT_ID      0x6464
-#define DEVICE_VER      0x0001
-/* in python2: list(u"whatever".encode('utf-16-le')) */
-/*   at most 32 characters or the ugly hack in usb_main.c borks */
-#define MANUFACTURER QMK
-#define PRODUCT ergo42
-#define DESCRIPTION QMK based keyboard
+#define VENDOR_ID       0xBC42
+#define PRODUCT_ID      0x0042
+#define DEVICE_VER      0x0100
+#define MANUFACTURER    Biacco42
+#define PRODUCT         Ergo42
+#define DESCRIPTION     The Answer to the Ultimate Question of Life, the Universe, and at least Keyboards
 
 /* key matrix size */
 #define MATRIX_ROWS 8
