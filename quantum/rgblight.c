@@ -29,8 +29,12 @@
 #define RGBLIGHT_LIMIT_VAL 255
 #endif
 
+#ifndef MIN
 #define MIN(a,b) (((a)<(b))?(a):(b))
+#endif
+#ifndef MAX
 #define MAX(a,b) (((a)>(b))?(a):(b))
+#endif
 
 __attribute__ ((weak))
 const uint8_t RGBLED_BREATHING_INTERVALS[] PROGMEM = {30, 20, 10, 5};
@@ -330,7 +334,7 @@ void rgblight_disable_noeeprom(void) {
   #ifdef RGBLIGHT_ANIMATIONS
     rgblight_timer_disable();
   #endif
-  _delay_ms(50);
+  wait_ms(50);
   rgblight_set();
 }
 

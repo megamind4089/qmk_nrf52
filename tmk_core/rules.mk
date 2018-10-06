@@ -1,6 +1,6 @@
 # Hey Emacs, this is a -*- makefile -*-
 #----------------------------------------------------------------------------
-# WinAVR Makefile Template written by Eric B. Weddington, Jî’šg Wunsch, et al.
+# WinAVR Makefile Template written by Eric B. Weddington, Jû®šg Wunsch, et al.
 #
 # Released to the Public Domain
 #
@@ -91,7 +91,9 @@ ifeq ("$(shell echo "int main(){}" | $(CC) -fdiagnostics-color -x c - -o /dev/nu
 endif
 endif
 CFLAGS += -Wall
-CFLAGS += -Wstrict-prototypes
+ifneq ($(PLATFORM), NRF_SDK)
+    CFLAGS += -Wstrict-prototypes
+endif
 ifneq ($(strip $(ALLOW_WARNINGS)), yes)
     CFLAGS += -Werror
 endif

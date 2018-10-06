@@ -99,6 +99,34 @@ void print_set_sendchar(int8_t (*print_sendchar_func)(uint8_t));
 
 #  endif /* USER_PRINT / NORMAL PRINT */
 
+#elif defined(PROTOCOL_NRF)
+
+#  include "nrf/printf.h"
+
+#  ifdef USER_PRINT /* USER_PRINT */
+
+// Remove normal print defines
+#    define print(s)
+#    define println(s)
+#    define xprintf(fmt, ...)
+
+// Create user print defines
+#    define uprint(s)    tfp_printf(s)
+#    define uprintln(s)  tfp_printf(s "\r\n")
+#    define uprintf      tfp_printf
+
+#  else /* NORMAL PRINT */
+
+// Create user & normal print defines
+#    define print(s)     tfp_printf(s)
+#    define println(s)   tfp_printf(s "\r\n")
+#    define xprintf      tfp_printf
+#    define uprint(s)    tfp_printf(s)
+#    define uprintln(s)  tfp_printf(s "\r\n")
+#    define uprintf      tfp_printf
+
+#  endif /* USER_PRINT / NORMAL PRINT */
+
 #elif defined(__arm__) /* __arm__ */
 
 #  include "mbed/xprintf.h"

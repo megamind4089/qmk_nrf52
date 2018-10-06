@@ -84,6 +84,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define KEYBOARD_REPORT_SIZE NKRO_EPSIZE
     #define KEYBOARD_REPORT_KEYS (NKRO_EPSIZE - 2)
     #define KEYBOARD_REPORT_BITS (NKRO_EPSIZE - 1)
+//  #elif defined(PROTOCOL_NRF)
+//    #define KEYBOARD_REPORT_SIZE 32
+//    #define KEYBOARD_REPORT_KEYS (KEYBOARD_REPORT_SIZE - 2)
+//    #define KEYBOARD_REPORT_BITS (KEYBOARD_REPORT_SIZE - 1)
   #else
     #error "NKRO not supported with this protocol"
 #endif
