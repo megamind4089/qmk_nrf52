@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wait.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
+#include "nrfx_power.h"
 
 #define PWM_PERIOD ((int) (1.25f / 0.0625f))
 #define PWM_0H_DURATION ((int) (0.4f / 0.0625f))
@@ -32,7 +33,10 @@ void pwm_handler(nrfx_pwm_evt_type_t event_type) {
 }
 
 void ws2812_setleds(LED_TYPE *ledarray, uint16_t number_of_leds) {
-  ws2812_setleds_pin(ledarray, number_of_leds, RGB_DI_PIN);
+  if (nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_CONNECTED ||
+      nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_READY) {
+    ws2812_setleds_pin(ledarray, number_of_leds, RGB_DI_PIN);
+  }
 }
 
 void ws2812_setleds_pin (LED_TYPE *ledarray, uint16_t number_of_leds,uint8_t pinmask){

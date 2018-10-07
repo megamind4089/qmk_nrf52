@@ -448,16 +448,15 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
                 NRF_LOG_INFO("USB enable");
             }
 #ifdef RGBLIGHT_ENABLE
-            rgblight_enable();
-//            rgblight_mode(21);
-//            rgblight_mode(35);
+//            rgblight_enable_noeeprom();
+//            rgblight_mode_noeeprom(35);
 #endif
             break;
         case APP_USBD_EVT_POWER_REMOVED:
             NRF_LOG_INFO("USB power removed");
             app_usbd_stop();
 #ifdef RGBLIGHT_ENABLE
-            rgblight_disable();
+//            rgblight_disable();
 #endif
             break;
         case APP_USBD_EVT_POWER_READY:

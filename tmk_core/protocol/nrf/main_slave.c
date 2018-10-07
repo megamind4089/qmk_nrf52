@@ -19,13 +19,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "usbd.h"
 #include "nrf_power.h"
 #include "matrix.h"
+#include "keyboard.h"
+#include "printf.h"
+#include "sendchar.h"
+
+#ifdef RGBLIGHT_ENABLE
+#include "rgblight.h"
+#endif
 
 #define MAINTASK_INTERVAL 17
 
+void sendchar_pf(void *p, char c){
+  UNUSED_VARIABLE(p);
+  UNUSED_VARIABLE(c);
+};
 void timer_tick(uint8_t interval);
 static void slave_main_tasks(void* context) {
   timer_tick(MAINTASK_INTERVAL);
   matrix_scan();
+#if defined(RGBLIGHT_ENABLE) && defined(RGBLIGHT_ANIMATIONS)
+  rgblight_task();
+#endif
 }
 
 /**@brief Application main function.
@@ -47,7 +61,9 @@ int main(void) {
   advertising_init();
   conn_params_init();
 
-  matrix_init();
+//  matrix_init();
+  init_printf(NULL, sendchar_pf);
+  keyboard_init();
   advertising_start();
   main_task_start(MAINTASK_INTERVAL);
   usbd_enable();
