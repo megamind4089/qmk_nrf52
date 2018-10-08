@@ -406,17 +406,23 @@ NRFLIBSRC += \
   $(NRFSDK_ROOT)/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c \
   $(NRFSDK_ROOT)/components/libraries/experimental_section_vars/nrf_section_iter.c \
   $(NRFSDK_ROOT)/components/libraries/strerror/nrf_strerror.c \
-  $(NRFSDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
   $(NRFSDK_ROOT)/integration/nrfx/legacy/nrf_drv_clock.c \
   $(NRFSDK_ROOT)/integration/nrfx/legacy/nrf_drv_uart.c \
   $(NRFSDK_ROOT)/integration/nrfx/legacy/nrf_drv_power.c \
-  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
+  $(NRFSDK_ROOT)/integration/nrfx/legacy/nrf_drv_twi.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_gpiote.c \
+  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
+  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_power_clock.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/prs/nrfx_prs.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_uart.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_uarte.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_saadc.c \
+  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twi.c \
+  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twim.c \
+  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twis.c \
+  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
+  $(NRFSDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
   $(NRFSDK_ROOT)/external/segger_rtt/SEGGER_RTT.c \
   $(NRFSDK_ROOT)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
   $(NRFSDK_ROOT)/external/segger_rtt/SEGGER_RTT_printf.c \
@@ -441,14 +447,7 @@ NRFLIBSRC += \
   $(NRFSDK_ROOT)/components/ble/ble_services/ble_hids/ble_hids.c \
   $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh.c \
   $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
-  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c \
-  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_power_clock.c \
   $(NRFSDK_ROOT)/components/libraries/queue/nrf_queue.c \
-  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
-  $(NRFSDK_ROOT)/integration/nrfx/legacy/nrf_drv_twi.c \
-  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twi.c \
-  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twim.c \
-  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twis.c \
   $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/app_usbd_hid.c \
   $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/generic/app_usbd_hid_generic.c \
   $(NRFSDK_ROOT)/components/libraries/usbd/class/cdc/acm/app_usbd_cdc_acm.c \
