@@ -36,22 +36,23 @@ ifeq ($(MCU_SERIES), NRF52840)
 else
   NRFSDK_VER = 12
 endif
-CFLAGS += -DNRF_SDK_MAJOR_VER=$(NRFSDK_VER)
+NRFCFLAGS += -DNRF_SDK_MAJOR_VER=$(NRFSDK_VER)
 
 NRF_VER_DIR = sdk$(NRFSDK_VER)
 
 ifeq ($(NRF_DEBUG), yes)
-  CFLAGS += -DDEBUG=DEBUG 
-  CFLAGS += -DNRF_LOG_ENABLED=1
+  NRFCFLAGS += -DDEBUG=DEBUG 
+  NRFCFLAGS += -DNRF_LOG_ENABLED=1
 else
-  CFLAGS += -DNRF_LOG_ENABLED=0
+  NRFCFLAGS += -DNRF_LOG_ENABLED=0
 endif
 
 COMMON_VPATH += $(DRIVER_PATH)/nrf52
 
 ifeq ($(NRFSDK_VER), 12)
+  NRFLIB := libnrf.sdk12.$(MCU_SERIES)
   # Source files common to all targets
-  NRFSRC += \
+  NRFLIBSRC += \
     $(TMK_PATH)/protocol/nrf/$(NRF_VER_DIR)/ble_advertising.c \
     $(NRFSDK_ROOT)/components/libraries/log/src/nrf_log_backend_serial.c \
     $(NRFSDK_ROOT)/components/libraries/log/src/nrf_log_frontend.c \
@@ -69,7 +70,6 @@ ifeq ($(NRFSDK_VER), 12)
     $(NRFSDK_ROOT)/components/libraries/util/nrf_assert.c \
     $(NRFSDK_ROOT)/components/libraries/util/sdk_errors.c \
     $(NRFSDK_ROOT)/components/libraries/util/sdk_mapped_flags.c \
-    $(NRFSDK_ROOT)/components/boards/boards.c \
     $(NRFSDK_ROOT)/components/drivers_nrf/clock/nrf_drv_clock.c \
     $(NRFSDK_ROOT)/components/drivers_nrf/common/nrf_drv_common.c \
     $(NRFSDK_ROOT)/components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
@@ -216,24 +216,24 @@ ifeq ($(NRFSDK_VER), 12)
       $(TOP_DIR)/tmk_core/protocol/nrf/nrf51 \
 
     # C flags common to all targets
-    CFLAGS +=-DADC_ENABLED=1
-    CFLAGS +=-DSAADC_ENABLED=0
-    CFLAGS +=-DFDS_VIRTUAL_PAGE_SIZE=256
-    CFLAGS += -DBOARD_CUSTOM
-    CFLAGS += -DSOFTDEVICE_PRESENT
-    CFLAGS += -DNRF51
-    CFLAGS += -DS130
-    CFLAGS += -DBLE_STACK_SUPPORT_REQD
-    CFLAGS += -DSWI_DISABLE0
-    CFLAGS += -DNRF51822
-    CFLAGS += -DNRF_SD_BLE_API_VERSION=2
-    CFLAGS += -mcpu=cortex-m0
-    CFLAGS += -mthumb -mabi=aapcs
-    CFLAGS +=  -Wall -Werror -Os -g3
-    CFLAGS += -mfloat-abi=soft
+    NRFCFLAGS +=-DADC_ENABLED=1
+    NRFCFLAGS +=-DSAADC_ENABLED=0
+    NRFCFLAGS +=-DFDS_VIRTUAL_PAGE_SIZE=256
+    NRFCFLAGS += -DBOARD_CUSTOM
+    NRFCFLAGS += -DSOFTDEVICE_PRESENT
+    NRFCFLAGS += -DNRF51
+    NRFCFLAGS += -DS130
+    NRFCFLAGS += -DBLE_STACK_SUPPORT_REQD
+    NRFCFLAGS += -DSWI_DISABLE0
+    NRFCFLAGS += -DNRF51822
+    NRFCFLAGS += -DNRF_SD_BLE_API_VERSION=2
+    NRFCFLAGS += -mcpu=cortex-m0
+    NRFCFLAGS += -mthumb -mabi=aapcs
+    NRFCFLAGS +=  -Wall -Werror -Os -g3
+    NRFCFLAGS += -mfloat-abi=soft
     # keep every function in separate section, this allows linker to discard unused ones
-    CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
-    CFLAGS += -fno-builtin --short-enums 
+    NRFCFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
+    NRFCFLAGS += -fno-builtin --short-enums 
 
     # C++ flags common to all targets
     CXXFLAGS += \
@@ -294,27 +294,27 @@ ifeq ($(NRFSDK_VER), 12)
         $(NRFSDK_ROOT)/components/drivers_nrf/systick \
         $(TOP_DIR)/tmk_core/protocol/nrf/nrf52 \
     
-      CFLAGS += -DNRF52840_XXAA
-      CFLAGS += -DAPP_USBD_ENABLED=1
-      CFLAGS += -DUSBD_ENABLED=1
-      CFLAGS += -DSYSTICK_ENABLED=1
-      CFLAGS += -DPOWER_CONFIG_IRQ_PRIORITY=7
-      CFLAGS += -DCLOCK_CONFIG_IRQ_PRIORITY=7
+      NRFCFLAGS += -DNRF52840_XXAA
+      NRFCFLAGS += -DAPP_USBD_ENABLED=1
+      NRFCFLAGS += -DUSBD_ENABLED=1
+      NRFCFLAGS += -DSYSTICK_ENABLED=1
+      NRFCFLAGS += -DPOWER_CONFIG_IRQ_PRIORITY=7
+      NRFCFLAGS += -DCLOCK_CONFIG_IRQ_PRIORITY=7
       ASFLAGS += -DNRF52840_XXAA
     else
-      CFLAGS += -DNRF52832_XXAA
-      CFLAGS += -DNRF52832
-      CFLAGS += -DNRF52
-      CFLAGS += -DNRF52_PAN_12
-      CFLAGS += -DNRF52_PAN_58
-      CFLAGS += -DNRF52_PAN_54
-      CFLAGS += -DNRF52_PAN_31
-      CFLAGS += -DNRF52_PAN_51
-      CFLAGS += -DNRF52_PAN_36
-      CFLAGS += -DNRF52_PAN_15
-      CFLAGS += -DNRF52_PAN_20
-      CFLAGS += -DNRF52_PAN_55
-      CFLAGS += -DNRF52_PAN_64
+      NRFCFLAGS += -DNRF52832_XXAA
+      NRFCFLAGS += -DNRF52832
+      NRFCFLAGS += -DNRF52
+      NRFCFLAGS += -DNRF52_PAN_12
+      NRFCFLAGS += -DNRF52_PAN_58
+      NRFCFLAGS += -DNRF52_PAN_54
+      NRFCFLAGS += -DNRF52_PAN_31
+      NRFCFLAGS += -DNRF52_PAN_51
+      NRFCFLAGS += -DNRF52_PAN_36
+      NRFCFLAGS += -DNRF52_PAN_15
+      NRFCFLAGS += -DNRF52_PAN_20
+      NRFCFLAGS += -DNRF52_PAN_55
+      NRFCFLAGS += -DNRF52_PAN_64
 
       ASFLAGS += -DNRF52832_XXAA
       ASFLAGS += -DNRF52_PAN_12
@@ -329,24 +329,24 @@ ifeq ($(NRFSDK_VER), 12)
       ASFLAGS += -DNRF52_PAN_55
     endif   
     # C flags common to all targets
-    CFLAGS +=-DADC_ENABLED=0
-    CFLAGS +=-DSAADC_ENABLED=1
-    CFLAGS +=-DFDS_VIRTUAL_PAGE_SIZE=1024
-  #  CFLAGS += -DNRF52
-    CFLAGS += -DSOFTDEVICE_PRESENT
-    CFLAGS += -DBOARD_CUSTOM
-    CFLAGS += -DCONFIG_GPIO_AS_PINRESET
-    CFLAGS += -DBLE_STACK_SUPPORT_REQD
-    CFLAGS += -DNRF_SD_BLE_API_VERSION=3
-    CFLAGS += -DSWI_DISABLE0
-    CFLAGS += -DS132
-    CFLAGS += -mcpu=cortex-m4
-    CFLAGS += -mthumb -mabi=aapcs
-    CFLAGS +=  -Wall -Werror -O3 -g3
-    CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+    NRFCFLAGS +=-DADC_ENABLED=0
+    NRFCFLAGS +=-DSAADC_ENABLED=1
+    NRFCFLAGS +=-DFDS_VIRTUAL_PAGE_SIZE=1024
+  #  NRFCFLAGS += -DNRF52
+    NRFCFLAGS += -DSOFTDEVICE_PRESENT
+    NRFCFLAGS += -DBOARD_CUSTOM
+    NRFCFLAGS += -DCONFIG_GPIO_AS_PINRESET
+    NRFCFLAGS += -DBLE_STACK_SUPPORT_REQD
+    NRFCFLAGS += -DNRF_SD_BLE_API_VERSION=3
+    NRFCFLAGS += -DSWI_DISABLE0
+    NRFCFLAGS += -DS132
+    NRFCFLAGS += -mcpu=cortex-m4
+    NRFCFLAGS += -mthumb -mabi=aapcs
+    NRFCFLAGS +=  -Wall -Werror -O3 -g3
+    NRFCFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
     # keep every function in separate section, this allows linker to discard unused ones
-    CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
-    CFLAGS += -fno-builtin --short-enums 
+    NRFCFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
+    NRFCFLAGS += -fno-builtin --short-enums 
 
     # C++ flags common to all targets
     CXXFLAGS += \
@@ -376,7 +376,7 @@ endif
 endif
 
 ifeq ($(NRFSDK_VER), 15)
-NRFSRC += \
+NRFLIBSRC += \
   $(NRFSDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_rtt.c \
   $(NRFSDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_serial.c \
   $(NRFSDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_uart.c \
@@ -422,14 +422,12 @@ NRFSRC += \
   $(NRFSDK_ROOT)/external/segger_rtt/SEGGER_RTT_printf.c \
   $(NRFSDK_ROOT)/components/ble/common/ble_advdata.c \
   $(NRFSDK_ROOT)/components/ble/ble_advertising/ble_advertising.c \
-  $(NRFSDK_ROOT)/components/ble/common/ble_conn_params.c \
   $(NRFSDK_ROOT)/components/ble/common/ble_conn_state.c \
   $(NRFSDK_ROOT)/components/ble/ble_link_ctx_manager/ble_link_ctx_manager.c \
   $(NRFSDK_ROOT)/components/ble/common/ble_srv_common.c \
   $(NRFSDK_ROOT)/components/ble/peer_manager/gatt_cache_manager.c \
   $(NRFSDK_ROOT)/components/ble/peer_manager/gatts_cache_manager.c \
   $(NRFSDK_ROOT)/components/ble/peer_manager/id_manager.c \
-  $(NRFSDK_ROOT)/components/ble/nrf_ble_gatt/nrf_ble_gatt.c \
   $(NRFSDK_ROOT)/components/ble/nrf_ble_qwr/nrf_ble_qwr.c \
   $(NRFSDK_ROOT)/components/ble/peer_manager/peer_data_storage.c \
   $(NRFSDK_ROOT)/components/ble/peer_manager/peer_database.c \
@@ -437,31 +435,34 @@ NRFSRC += \
   $(NRFSDK_ROOT)/components/ble/peer_manager/peer_manager.c \
   $(NRFSDK_ROOT)/components/ble/peer_manager/pm_buffer.c \
   $(NRFSDK_ROOT)/components/ble/peer_manager/pm_mutex.c \
-  $(NRFSDK_ROOT)/components/ble/peer_manager/security_dispatcher.c \
   $(NRFSDK_ROOT)/components/ble/peer_manager/security_manager.c \
   $(NRFSDK_ROOT)/components/ble/ble_services/ble_bas/ble_bas.c \
   $(NRFSDK_ROOT)/components/ble/ble_services/ble_dis/ble_dis.c \
   $(NRFSDK_ROOT)/components/ble/ble_services/ble_hids/ble_hids.c \
   $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh.c \
-  $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
   $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
-  $(NRFSDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
-  $(NRFSDK_ROOT)/components/libraries/usbd/app_usbd.c \
-  $(NRFSDK_ROOT)/components/libraries/usbd/app_usbd_core.c \
-  $(NRFSDK_ROOT)/components/libraries/usbd/app_usbd_string_desc.c \
-  $(NRFSDK_ROOT)/components/libraries/usbd/class/dummy/app_usbd_dummy.c \
-  $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/app_usbd_hid.c \
-  $(NRFSDK_ROOT)/components/drivers_nrf/usbd/nrf_drv_usbd.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_power_clock.c \
-  $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/generic/app_usbd_hid_generic.c \
-  $(NRFSDK_ROOT)/components/libraries/usbd/class/cdc/acm/app_usbd_cdc_acm.c \
   $(NRFSDK_ROOT)/components/libraries/queue/nrf_queue.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
   $(NRFSDK_ROOT)/integration/nrfx/legacy/nrf_drv_twi.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twi.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twim.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twis.c \
+  $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/app_usbd_hid.c \
+  $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/generic/app_usbd_hid_generic.c \
+  $(NRFSDK_ROOT)/components/libraries/usbd/class/cdc/acm/app_usbd_cdc_acm.c \
+  $(NRFSDK_ROOT)/components/libraries/usbd/app_usbd.c \
+  $(NRFSDK_ROOT)/components/libraries/usbd/app_usbd_string_desc.c \
+  $(NRFSDK_ROOT)/components/libraries/usbd/class/dummy/app_usbd_dummy.c \
+  $(NRFSDK_ROOT)/components/drivers_nrf/usbd/nrf_drv_usbd.c \
+
+NRFSRC +=  $(NRFSDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
+  $(NRFSDK_ROOT)/components/libraries/usbd/app_usbd_core.c \
+  $(NRFSDK_ROOT)/components/ble/peer_manager/security_dispatcher.c \
+  $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
+  $(NRFSDK_ROOT)/components/ble/common/ble_conn_params.c \
+  $(NRFSDK_ROOT)/components/ble/nrf_ble_gatt/nrf_ble_gatt.c \
 
 #  $(NRFSDK_ROOT)/components/libraries/bsp/bsp.c \
   $(NRFSDK_ROOT)/components/libraries/bsp/bsp_btn_ble.c \
@@ -607,44 +608,49 @@ EXTRAINCDIRS += \
   $(NRFSDK_ROOT)/components/ble/ble_db_discovery \
   $(NRFSDK_ROOT)/components/ble/ble_radio_notification \
 
-ifeq ($(strip $(NRF_SEPARATE)), master)
-NRFSRC += \
-  $(NRFSDK_ROOT)/components/ble/ble_db_discovery/ble_db_discovery.c \
-  $(NRFSDK_ROOT)/components/ble/ble_services/ble_nus_c/ble_nus_c.c \
+NRFLIB := libnrf.sdk15.$(MCU_SERIES)
 
-  CFLAGS += -DBLE_DB_DISCOVERY_ENABLED=1
-  CFLAGS += -DBLE_NUS_C_ENABLED=1
-  CFLAGS += -DPM_CENTRAL_ENABLED=1
-  CFLAGS += -DNRF_SDH_BLE_CENTRAL_LINK_COUNT=1
-  CFLAGS += -DNRF_SDH_BLE_TOTAL_LINK_COUNT=2
+ifeq ($(strip $(NRF_SEPARATE)), master)
+  NRFSRC += \
+    $(NRFSDK_ROOT)/components/ble/ble_db_discovery/ble_db_discovery.c \
+    $(NRFSDK_ROOT)/components/ble/ble_services/ble_nus_c/ble_nus_c.c \
+
+  EXTNRFCFLAGS += -DBLE_DB_DISCOVERY_ENABLED=1
+  EXTNRFCFLAGS += -DBLE_NUS_C_ENABLED=1
+  EXTNRFCFLAGS += -DPM_CENTRAL_ENABLED=1
+  EXTNRFCFLAGS += -DNRF_SDH_BLE_CENTRAL_LINK_COUNT=1
+  EXTNRFCFLAGS += -DNRF_SDH_BLE_TOTAL_LINK_COUNT=2
 endif
 ifeq ($(strip $(NRF_SEPARATE)), slave)
-NRFSRC += \
-  $(NRFSDK_ROOT)/components/ble/ble_services/ble_nus/ble_nus.c \
+  NRFSRC += \
+    $(NRFSDK_ROOT)/components/ble/ble_services/ble_nus/ble_nus.c \
 
-  CFLAGS += -DNRF_SDH_BLE_PERIPHERAL_LINK_COUNT=1
-  CFLAGS += -DNRF_SDH_BLE_CENTRAL_LINK_COUNT=0
-  CFLAGS += -DNRF_SDH_BLE_TOTAL_LINK_COUNT=1
-  CFLAGS += -DNRF_SDH_BLE_GATT_MAX_MTU_SIZE=247
-  CFLAGS += -DBLE_NUS_ENABLED=1
+  EXTNRFCFLAGS += -DNRF_SDH_BLE_PERIPHERAL_LINK_COUNT=1
+  EXTNRFCFLAGS += -DNRF_SDH_BLE_CENTRAL_LINK_COUNT=0
+  EXTNRFCFLAGS += -DNRF_SDH_BLE_TOTAL_LINK_COUNT=1
+  EXTNRFCFLAGS += -DNRF_SDH_BLE_GATT_MAX_MTU_SIZE=247
+  EXTNRFCFLAGS += -DBLE_NUS_ENABLED=1
 endif
 
-  CFLAGS += -DBOARD_CUSTOM
-#  CFLAGS += -DCONFIG_GPIO_AS_PINRESET
-  CFLAGS += -DCONFIG_NFCT_PINS_AS_GPIOS
-  CFLAGS += -DFLOAT_ABI_HARD
-  CFLAGS += -DNRF52840_XXAA
-  CFLAGS += -DNRF_SD_BLE_API_VERSION=6
-  CFLAGS += -DS140
-  CFLAGS += -DSOFTDEVICE_PRESENT
-  CFLAGS += -DSWI_DISABLE0
-  CFLAGS += -mcpu=cortex-m4
-  CFLAGS += -mthumb -mabi=aapcs
-#  CFLAGS += -Wall -Werror
-  CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+  NRFCFLAGS += -DAPP_USBD_VID=VENDOR_ID
+  NRFCFLAGS += -DAPP_USBD_PID=PRODUCT_ID
+  NRFCFLAGS += -DBOARD_CUSTOM
+#  NRFCFLAGS += -DCONFIG_GPIO_AS_PINRESET
+  NRFCFLAGS += -DCONFIG_NFCT_PINS_AS_GPIOS
+  NRFCFLAGS += -DFLOAT_ABI_HARD
+  NRFCFLAGS += -DNRF52840_XXAA
+  NRFCFLAGS += -DNRF_SD_BLE_API_VERSION=6
+  NRFCFLAGS += -DS140
+  NRFCFLAGS += -DSOFTDEVICE_PRESENT
+  NRFCFLAGS += -DSWI_DISABLE0
+  NRFCFLAGS += -mcpu=cortex-m4
+  NRFCFLAGS += -mthumb -mabi=aapcs
+#  NRFCFLAGS += -Wall -Werror
+  NRFCFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
   # keep every function in a separate section, this allows linker to discard unused ones
-  CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
-  CFLAGS += -fno-builtin -fshort-enums
+  NRFCFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
+  NRFCFLAGS += -fno-builtin -fshort-enums
+  NRFCFLAGS += -Os
 
   ASFLAGS += -mcpu=cortex-m4
   ASFLAGS += -mthumb -mabi=aapcs
@@ -658,8 +664,8 @@ endif
   ASFLAGS += -DSOFTDEVICE_PRESENT
   ASFLAGS += -DSWI_DISABLE0
 
-  CFLAGS += -D__HEAP_SIZE=0
-  CFLAGS += -D__STACK_SIZE=16384
+  NRFCFLAGS += -D__HEAP_SIZE=0
+  NRFCFLAGS += -D__STACK_SIZE=16384
   ASMFLAGS += -D__HEAP_SIZE=0
   ASMFLAGS += -D__STACK_SIZE=16384
 
@@ -671,6 +677,13 @@ endif
   LDFLAGS += -Wl,--gc-sections
   # use newlib in nano version
   LDFLAGS += --specs=nano.specs -lc -lnosys
+#  LDFLAGS += -L. $(NRFLIB)
+endif
+
+ifeq ($(NRF_DEBUG), yes)
+	NRFLIB := $(NRFLIB).debug.a
+else
+	NRFLIB := $(NRFLIB).a
 endif
 
 # Project, sources and paths
@@ -715,7 +728,7 @@ BIN = $(OBJCOPY) -O binary
 #COMPILEFLAGS += -fshort-wchar
 #COMPILEFLAGS += $(THUMBFLAGS)
 
-CFLAGS += $(COMPILEFLAGS)
+NRFCFLAGS += $(COMPILEFLAGS)
 
 #ASFLAGS += $(THUMBFLAGS)
 
@@ -753,7 +766,7 @@ ifneq ("$(SERIAL)","")
 endif
 
 # List any extra directories to look for libraries here.
-EXTRALIBDIRS = $(RULESPATH)/ld
+EXTRALIBDIRS = $(RULESPATH)/ld .
 
 DFU_UTIL ?= dfu-util
 
@@ -812,3 +825,35 @@ dfu-util: $(BUILD_DIR)/$(TARGET).bin cpfirmware sizeafter
 
 bin: $(BUILD_DIR)/$(TARGET).bin sizeafter
 	$(COPY) $(BUILD_DIR)/$(TARGET).bin $(TARGET).bin;
+
+elf: $(NRFLIB)
+
+NRFLIBOBJ := $(NRFLIBSRC:%.c=$(BUILD_DIR)/$(NRFLIB)/%.o)
+NRFLIBINC := $(patsubst %,-I%,$(EXTRAINCDIRS))
+NRFLIBDEPS := $(patsubst %.o,%.d,$(NRFLIBOBJ))
+
+$(BUILD_DIR)/$(NRFLIB)/%.o: %.c $(BUILD_DIR)/$(NRFLIB)/%.d $(BUILD_DIR)/$(NRFLIB)/cflags.txt
+	@mkdir -p $(@D)
+	@$(SILENT) || printf "$(MSG_COMPILING) $<" | $(AWK_CMD)
+	$(CC) -c $(NRFCFLAGS) $(NRFLIBINC) -MMD -MP -MF $(patsubst %.o,%.td,$@) $< -o $@ && mv -f $(patsubst %.o,%.td,$@) $(patsubst %.o,%.d,$@)
+	@$(BUILD_CMD)
+	
+$(BUILD_DIR)/$(NRFLIB)/force:
+
+$(BUILD_DIR)/$(NRFLIB)/cflags.txt: $(BUILD_DIR)/$(NRFLIB)/force
+	@mkdir -p $(@D)
+	echo '$(NRFCFLAGS)' | cmp -s - $@ || echo '$(NRFCFLAGS)' > $@
+
+# Keep the .d files
+.PRECIOUS: $(NRFLIBDEPS)
+# Empty rule to force recompilation if the .d file is missing
+$(NRFLIBDEPS):
+
+$(NRFLIB): $(NRFLIBOBJ)
+	$(AR) rcs $@ $^
+	
+# Include the dependency files.
+-include $(patsubst %.o,%.d,$(NRFLIBOBJ))
+
+CFLAGS += $(NRFCFLAGS) $(EXTNRFCFLAGS)
+EXTRAOBJ += $(NRFLIBOBJ)

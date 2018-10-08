@@ -44,9 +44,6 @@
 #define SDK_CONFIG_H
 // <<< Use Configuration Wizard in Context Menu >>>\n
 
-#include "custom_board.h"
-#include "config.h"
-
 #ifdef USE_APP_CONFIG
 #include "app_config.h"
 #endif
@@ -5540,7 +5537,7 @@
 // <i> Vendor ID ordered from USB IF: http://www.usb.org/developers/vendor/
 
 #ifndef APP_USBD_VID
-#define APP_USBD_VID VENDOR_ID
+#error "Error: APP_USBD_VID is undefined"
 #endif
 
 // <o> APP_USBD_PID - Product ID  <0x0000-0xFFFF> 
@@ -5549,7 +5546,7 @@
 // <i> Selected Product ID
 
 #ifndef APP_USBD_PID
-#define APP_USBD_PID PRODUCT_ID
+#error "Error: APP_USBD_PID is undefined"
 #endif
 
 // <o> APP_USBD_DEVICE_VER_MAJOR - Device version, major part  <0-99> 

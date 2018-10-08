@@ -44,6 +44,7 @@
 #include "app_ble_func.h"
 
 #include "ble_nus_c.h"
+#include "ble_gap.h"
 #include "softdevice_handler_appsh.h"
 #include "fstorage.h"
 
@@ -93,12 +94,27 @@ static ble_gap_addr_t whitelist_addrs[8];
 static ble_gap_irk_t whitelist_irks[8];
 static ble_gap_addr_t *p_whitelist_addrs = whitelist_addrs;
 static ble_gap_irk_t *p_whitelist_irks = whitelist_irks;
+#if (NRF_SD_BLE_API_VERSION == 2)
 static ble_gap_whitelist_t whitelist = {
     .pp_addrs = &p_whitelist_addrs,
     .addr_count = 0,
     .pp_irks = &p_whitelist_irks,
     .irk_count = 0,
 };
+#else
+typedef struct {
+  ble_gap_addr_t** pp_addrs;
+  uint8_t addr_count;
+  ble_gap_irk_t** pp_irks;
+  uint8_t irk_count;
+} whitelist_t;
+static whitelist_t whitelist = {
+    .pp_addrs = &p_whitelist_addrs,
+    .addr_count = 0,
+    .pp_irks = &p_whitelist_irks,
+    .irk_count = 0,
+};
+#endif
 
 /**@brief Connection parameters requested for connection. */
 static const ble_gap_conn_params_t m_connection_param =

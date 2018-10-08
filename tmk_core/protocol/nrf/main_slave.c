@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ble_slave.h"
 #include "usbd.h"
+#include "nrf_soc.h"
 #include "nrf_power.h"
 #include "matrix.h"
 #include "keyboard.h"

@@ -33,7 +33,7 @@ endef
 $(foreach OUTPUT,$(OUTPUTS),$(eval $(OUTPUT)_OBJ +=$(call OBJ_FROM_SRC,$(OUTPUT))))
 
 # Define a list of all objects
-OBJ := $(foreach OUTPUT,$(OUTPUTS),$($(OUTPUT)_OBJ))
+OBJ := $(foreach OUTPUT,$(OUTPUTS),$($(OUTPUT)_OBJ)) $(EXTRAOBJ)
 
 MASTER_OUTPUT := $(firstword $(OUTPUTS))
 

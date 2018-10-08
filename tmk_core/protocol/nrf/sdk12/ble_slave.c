@@ -790,9 +790,9 @@ void advertising_start(void) {
   APP_ERROR_CHECK(ret);
 }
 
-void main_task_start(void) {
+void main_task_start(uint8_t interval_ms) {
   uint32_t err_code = app_timer_start(main_task_timer_id,
-      APP_TIMER_TICKS(17, 0), NULL);
+      APP_TIMER_TICKS(interval_ms, 0), NULL);
   APP_ERROR_CHECK(err_code);
 }
 

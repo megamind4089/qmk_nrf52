@@ -1,8 +1,8 @@
 #ifndef TMK_CORE_PROTOCOL_NRF_NRF52_USBD_H_
 #define TMK_CORE_PROTOCOL_NRF_NRF52_USBD_H_
 
-#if defined(NRF52840_XXAA) && NRF_SDK_MAJOR_VER==15
 #include "host.h"
+#if defined(NRF52840_XXAA) && NRF_SDK_MAJOR_VER==15
 int usbd_init(void);
 void usbd_enable(void);
 int usbd_process(void);

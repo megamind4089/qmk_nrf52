@@ -43,8 +43,6 @@
 #ifndef SDK_CONFIG_H
 #define SDK_CONFIG_H
 
-#include "custom_board.h"
-
 // <<< Use Configuration Wizard in Context Menu >>>\n
 #ifdef USE_APP_CONFIG
 #include "app_config.h"
@@ -423,7 +421,7 @@
 // <2=> Synth 
 
 #ifndef CLOCK_CONFIG_LF_SRC
-#define CLOCK_CONFIG_LF_SRC 1
+#define CLOCK_CONFIG_LF_SRC 0
 #endif
 
 // <o> CLOCK_CONFIG_IRQ_PRIORITY  - Interrupt priority

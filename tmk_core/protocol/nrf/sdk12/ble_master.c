@@ -1188,7 +1188,7 @@ void ble_send_keyboard(report_keyboard_t *report) {
  * ---------------------------------------------------------
  */
 
-void ble_send_abs_mouse(int8_t x, int8_t y) {
+void ble_send_abs_mouse(uint8_t x, uint8_t y) {
   uint8_t data[2];
   data[0] = (uint8_t) x;
   data[1] = (uint8_t) y;
@@ -1418,9 +1418,9 @@ void logger_init() {
   NRF_LOG_INFO("logger init\r\n");
 }
 
-void main_task_start() {
+void main_task_start(uint8_t interval) {
   uint32_t err_code = app_timer_start(main_task_timer_id,
-      APP_TIMER_TICKS(17, 0), NULL);
+      APP_TIMER_TICKS(interval, 0), NULL);
   APP_ERROR_CHECK(err_code);
 }
 void main_loop() {
@@ -1430,3 +1430,9 @@ void main_loop() {
   }
 }
 
+static bool enable_ble_send = true;
+static bool enable_usb_send = false;
+bool get_ble_enabled () { return enable_ble_send; }
+void set_ble_enabled (bool enabled) { enable_ble_send = enabled; }
+bool get_usb_enabled () { return enable_usb_send; }
+void set_usb_enabled (bool enabled) { enable_usb_send = false; }
