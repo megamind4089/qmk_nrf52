@@ -1,6 +1,8 @@
 #ifndef KEYBOARDS_NRF52_SEPARATE_TEST_
 #define KEYBOARDS_NRF52_SEPARATE_TEST_
 
+#include "custom_board.h"
+
 #define THIS_DEVICE_ROWS 4
 #define THIS_DEVICE_COLS 7
 
