@@ -81,8 +81,14 @@
 
 #define APP_ADV_DURATION                18000                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
+#ifndef BLE_NUS_MIN_INTERVAL
+  #define BLE_NUS_MIN_INTERVAL 20
+#endif
 #ifndef BLE_NUS_MAX_INTERVAL
   #define BLE_NUS_MAX_INTERVAL 75
+#endif
+#if BLE_NUS_MIN_INTERVAL > BLE_NUS_MAX_INTERVAL
+#error "MIN_INTERVAL should be larger than MAX_INTERVAL"
 #endif
 #ifndef BLE_NUS_SLAVE_LATENCY
   #define BLE_NUS_SLAVE_LATENCY 8
@@ -90,7 +96,7 @@
 #ifndef BLE_NUS_TIMEOUT
   #define BLE_NUS_TIMEOUT 1500
 #endif
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(BLE_NUS_MIN_INTERVAL, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
 #define MAX_CONN_INTERVAL               MSEC_TO_UNITS(BLE_NUS_MAX_INTERVAL, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
 #define SLAVE_LATENCY                   BLE_NUS_SLAVE_LATENCY                                           /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(BLE_NUS_TIMEOUT, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */

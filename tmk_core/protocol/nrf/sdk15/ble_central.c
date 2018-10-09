@@ -68,9 +68,14 @@
 #define SCAN_DURATION_WITELIST      3000                                /**< Duration of the scanning in units of 10 milliseconds. */
 
 
-
+#ifndef BLE_NUS_MIN_INTERVAL
+  #define BLE_NUS_MIN_INTERVAL 60
+#endif
 #ifndef BLE_NUS_MAX_INTERVAL
   #define BLE_NUS_MAX_INTERVAL 75
+#endif
+#if BLE_NUS_MIN_INTERVAL > BLE_NUS_MAX_INTERVAL
+#error "MIN_INTERVAL should be larger than MAX_INTERVAL"
 #endif
 #ifndef BLE_NUS_SLAVE_LATENCY
   #define BLE_NUS_SLAVE_LATENCY 8
@@ -79,7 +84,7 @@
   #define BLE_NUS_TIMEOUT 1500
 #endif
 
-#define MIN_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(60, UNIT_1_25_MS)   /**< Determines minimum connection interval in milliseconds. */
+#define MIN_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(BLE_NUS_MIN_INTERVAL, UNIT_1_25_MS)   /**< Determines minimum connection interval in milliseconds. */
 #define MAX_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(BLE_NUS_MAX_INTERVAL, UNIT_1_25_MS)    /**< Determines maximum connection interval in milliseconds. */
 #define SLAVE_LATENCY               BLE_NUS_SLAVE_LATENCY
 #define SUPERVISION_TIMEOUT         (uint16_t) MSEC_TO_UNITS(BLE_NUS_TIMEOUT, UNIT_10_MS)    /**< Determines supervision time-out in units of 10 milliseconds. */
