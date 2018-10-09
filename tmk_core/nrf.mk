@@ -827,11 +827,14 @@ bin: $(BUILD_DIR)/$(TARGET).bin sizeafter
 	
 GREP ?= grep
 NRFUTIL ?= nrfutil
-nrfutil:
+
+$(TARGET).zip: $(TARGET).bin
 	if ! type "nrfutil" > /dev/null 2>&1; then \
 		echo 'ERROR: nrfutil is not found'; exit 1;\
 	fi	
 	$(NRFUTIL) pkg generate --debug-mode --hw-version 52 --sd-req 0xA9 --application $(TARGET).bin $(TARGET).zip
+
+nrfutil: $(TARGET).zip
 	if $(GREP) -q -s Microsoft /proc/version; then \
 		echo 'ERROR: nrfutil cannot be automated within the Windows Subsystem for Linux (WSL) currently.'; \
 	else \
