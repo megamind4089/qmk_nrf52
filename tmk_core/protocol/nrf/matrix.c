@@ -187,7 +187,7 @@ uint8_t matrix_scan(void)
 
 #ifdef NRF_SEPARATE_KEYBOARD_SLAVE
   if (matrix_changed) {
-    NRF_LOG_INFO("NUS send\r\n");
+    NRF_LOG_DEBUG("NUS send");
     ble_nus_send_bytes((uint8_t*) ble_switch_send, matrix_changed*sizeof(ble_switch_state_t));
   }
 #else

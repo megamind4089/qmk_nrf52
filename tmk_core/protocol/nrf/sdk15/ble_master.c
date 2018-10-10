@@ -227,7 +227,7 @@ static void peer_list_get(pm_peer_id_t * p_peers, uint32_t * p_size) {
 void delete_bonds(void) {
   ret_code_t err_code;
 
-  NRF_LOG_INFO("Erase bonds!");
+  NRF_LOG_INFO("Erase all bonds!");
 
   err_code = pm_peers_delete();
   APP_ERROR_CHECK(err_code);
@@ -275,12 +275,13 @@ static void pm_evt_handler(pm_evt_t const * p_evt) {
 //  NRF_LOG_INFO("pm_evt_handler %d", p_evt->evt_id);
   switch (p_evt->evt_id) {
   case PM_EVT_BONDED_PEER_CONNECTED: {
-    NRF_LOG_INFO("Connected to a previously bonded device.");
+    NRF_LOG_DEBUG("Connected to a previously bonded device.");
   }
     break;
 
   case PM_EVT_CONN_SEC_SUCCEEDED: {
-    NRF_LOG_INFO(
+    NRF_LOG_INFO("Connected to device %d.", p_evt->peer_id);
+    NRF_LOG_DEBUG(
         "Connection secured: role: %d, conn_handle: 0x%x, procedure: %d, id: %d.",
         ble_conn_state_role(p_evt->conn_handle), p_evt->conn_handle,
         p_evt->params.conn_sec_succeeded.procedure, p_evt->peer_id);
@@ -461,7 +462,7 @@ static void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const *
 {
     if (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED)
     {
-        NRF_LOG_INFO("ATT MTU exchange completed.");
+        NRF_LOG_DEBUG("ATT MTU exchange completed.");
     }
 }
 /**@brief Function for initializing the GATT module.
@@ -924,7 +925,7 @@ static void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt) {
 
   switch (p_ble_evt->header.evt_id) {
   case BLE_GAP_EVT_CONNECTED:
-    NRF_LOG_INFO("Connected");
+    NRF_LOG_DEBUG("Connected");
     m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
     err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
     APP_ERROR_CHECK(err_code);
@@ -1135,15 +1136,15 @@ void ble_send_keyboard(report_keyboard_t *report) {
         COMPOSITE_REPORT_INDEX_KEYBOARD, INPUT_REPORT_KEYS_MAX_LEN, report->raw,
         m_conn_handle);
 #endif
-    NRF_LOG_INFO("key normal report send\r\n");
+    NRF_LOG_DEBUG("key normal report send\r\n");
   } else {
     err_code = ble_hids_boot_kb_inp_rep_send(&m_hids_composite,
     INPUT_REPORT_KEYS_MAX_LEN, report->raw, m_conn_handle);
-    NRF_LOG_INFO("key boot report send\r\n");
+    NRF_LOG_DEBUG("key boot report send\r\n");
   }
 //    APP_ERROR_CHECK(err_code);
   if (err_code != NRF_SUCCESS) {
-    NRF_LOG_INFO("send key error\r\n");
+    NRF_LOG_ERROR("send key error");
   } else {
     keyboard_report_sent = *report;
   }
@@ -1163,9 +1164,9 @@ void ble_send_abs_mouse(int8_t x, int8_t y) {
   }
   uint32_t err_code = ble_hids_inp_rep_send(&m_hids_composite,
       COMPOSITE_REPORT_INDEX_ABS_MOUSE, 2, (uint8_t*) data, m_conn_handle);
-  NRF_LOG_INFO("abs mouse report send\r\n");
+  NRF_LOG_DEBUG("abs mouse report send\r\n");
   if (err_code != NRF_SUCCESS) {
-    NRF_LOG_INFO("abs mouse send error\r\n");
+    NRF_LOG_DEBUG("abs mouse send error\r\n");
   }
 }
 
@@ -1180,15 +1181,15 @@ void ble_send_mouse(report_mouse_t *report) {
   if (!m_in_boot_mode) {
     err_code = ble_hids_inp_rep_send(&m_hids_composite,
         COMPOSITE_REPORT_INDEX_MOUSE, 5, (uint8_t*)report, m_conn_handle);
-    NRF_LOG_INFO("mouse normal report send\r\n");
+    NRF_LOG_DEBUG("mouse normal report send\r\n");
   } else {
     err_code = ble_hids_boot_mouse_inp_rep_send(&m_hids_composite,
         report->buttons, report->x, report->y, 0, NULL, m_conn_handle);
-    NRF_LOG_INFO("mouse boot report send\r\n");
+    NRF_LOG_DEBUG("mouse boot report send\r\n");
   }
 //    APP_ERROR_CHECK(err_code);
   if (err_code != NRF_SUCCESS) {
-    NRF_LOG_INFO("mouse send error\r\n");
+    NRF_LOG_ERROR("mouse send error\r\n");
   }
 }
 
@@ -1211,7 +1212,7 @@ static void ble_send_extra_report(uint8_t report_id, uint16_t data) {
   uint32_t err_code = ble_hids_inp_rep_send(&m_hids_composite,
       report_id, 2, (uint8_t*)&data, m_conn_handle);
   if (err_code != NRF_SUCCESS) {
-    NRF_LOG_INFO("extra send error\r\n");
+    NRF_LOG_ERROR("extra send error\r\n");
   }
 }
 
@@ -1290,6 +1291,10 @@ void logger_init(void) {
   APP_ERROR_CHECK(err_code);
 
   NRF_LOG_DEFAULT_BACKENDS_INIT();
+  extern const nrf_log_backend_api_t nrf_log_backend_cdc_acm_api;
+  static nrf_log_backend_t backend = {.p_api = &nrf_log_backend_cdc_acm_api};
+  nrf_log_backend_add(&backend, NRF_LOG_SEVERITY_INFO);
+  nrf_log_backend_enable(&backend);
 
   power_management_init();
 }
@@ -1316,6 +1321,10 @@ void restart_advertising_wo_whitelist() {
   uint32_t err_code;
 
   sd_ble_gap_adv_stop(m_advertising.adv_handle);
+
+#ifdef NRF_SEPARATE_KEYBOARD_MASTER
+  scan_start();
+#endif
 
   ble_adv_modes_config_t options;
   memset(&options, 0, sizeof(options));
@@ -1397,11 +1406,11 @@ void restart_advertising_id(uint8_t id) {
     APP_ERROR_CHECK(ret);
   }
 
-  ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
-
 #ifdef NRF_SEPARATE_KEYBOARD_MASTER
   scan_start();
 #endif
+
+  ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
 
 //  APP_ERROR_CHECK(ret);
 }

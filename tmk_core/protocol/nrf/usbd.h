@@ -11,6 +11,7 @@ int usbd_send_mouse(report_mouse_t *report);
 int usbd_send_system(uint16_t data);
 int usbd_send_consumer(uint16_t data);
 int usbd_send_abs_mouse(uint8_t x, uint8_t y);
+int usbd_send_cdc_acm(uint8_t *dat, uint8_t cnt);
 
 #else
 int usbd_init(void) {return 0;}

@@ -266,14 +266,48 @@ static char m_rx_buffer[READ_SIZE];
 static char m_tx_buffer[NRF_DRV_USBD_EPSIZE];
 static bool m_send_flag = 0;
 
-static void usbd_tx_start(uint8_t *buf, uint8_t len) {
+
+static void usbd_send_cdc_acm_internal(void const* p_context, char const *buf, size_t len) {
+  ret_code_t ret;
   if (!m_send_flag) {
-    len = len > NRF_DRV_USBD_EPSIZE ? NRF_DRV_USBD_EPSIZE : len;
-    memcpy(m_tx_buffer, buf, len);
-    app_usbd_cdc_acm_write(&m_app_cdc_acm, m_tx_buffer, len);
-    m_send_flag = true;
+    ret = app_usbd_cdc_acm_write(&m_app_cdc_acm, m_tx_buffer, len);
+    if(ret==NRF_SUCCESS) {
+      m_send_flag = true;
+    }
   }
 }
+void usbd_send_cdc_acm(uint8_t *buf, uint8_t len) {
+  if (!m_send_flag) {
+    len = len & 0xFF;
+    memcpy(m_tx_buffer, buf, len);
+    usbd_send_cdc_acm_internal(NULL, m_tx_buffer, len);
+  }
+}
+
+#include "nrf_log_backend_serial.h"
+#include "nrf_log_internal.h"
+//void nrf_log_backend_cdc_acm_init(void);
+
+static void nrf_log_backend_cdc_acm_put(nrf_log_backend_t const * p_backend,
+                                     nrf_log_entry_t * p_msg){
+  nrf_log_backend_serial_put(p_backend, p_msg, (uint8_t*)m_tx_buffer,
+                             NRF_DRV_USBD_EPSIZE, usbd_send_cdc_acm_internal);
+}
+static void nrf_log_backend_cdc_acm_flush(nrf_log_backend_t const * p_backend)
+{
+}
+
+static void nrf_log_backend_cdc_acm_panic_set(nrf_log_backend_t const * p_backend)
+{
+//    nrf_drv_uart_uninit(&m_uart);
+//    uart_init(false);
+}
+
+const nrf_log_backend_api_t nrf_log_backend_cdc_acm_api = {
+        .put       = nrf_log_backend_cdc_acm_put,
+        .flush     = nrf_log_backend_cdc_acm_flush,
+        .panic_set = nrf_log_backend_cdc_acm_panic_set,
+};
 
 /**
  * @brief User event handler @ref app_usbd_cdc_acm_user_ev_handler_t (headphones)
@@ -291,24 +325,25 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const * p_inst,
     break;
   }
   case APP_USBD_CDC_ACM_USER_EVT_PORT_CLOSE:
+    m_send_flag = false;
     break;
   case APP_USBD_CDC_ACM_USER_EVT_TX_DONE:
     m_send_flag = false;
     break;
   case APP_USBD_CDC_ACM_USER_EVT_RX_DONE: {
-    ret_code_t ret;
-    NRF_LOG_INFO("Bytes waiting: %d", app_usbd_cdc_acm_bytes_stored(p_cdc_acm));
-    do {
-      /*Get amount of data transfered*/
-      size_t size = app_usbd_cdc_acm_rx_size(p_cdc_acm);
-      NRF_LOG_INFO("RX: size: %lu char: %c", size, m_rx_buffer[0]);
-
-      /* Fetch data until internal buffer is empty */
-      ret = app_usbd_cdc_acm_read(&m_app_cdc_acm, m_rx_buffer,
-          READ_SIZE);
-    } while (ret == NRF_SUCCESS);
-
-    usbd_tx_start((uint8_t*)m_rx_buffer, 1);
+    // Echoback
+    UNUSED_VARIABLE(p_cdc_acm);
+//    ret_code_t ret;
+//    do {
+//      /*Get amount of data transfered*/
+//      size_t size = app_usbd_cdc_acm_rx_size(p_cdc_acm);
+//
+//      /* Fetch data until internal buffer is empty */
+//      ret = app_usbd_cdc_acm_read(&m_app_cdc_acm, m_rx_buffer,
+//          READ_SIZE);
+//    } while (ret == NRF_SUCCESS);
+//
+//    usbd_send_cdc_acm((uint8_t*)m_rx_buffer, 1);
 
     break;
   }
@@ -408,7 +443,7 @@ static void hid_kbd_user_ev_handler(app_usbd_class_inst_t const * p_inst,
             break;
         case APP_USBD_HID_USER_EVT_IN_REPORT_DONE:
             usbd_clear_sending_flag();
-            NRF_LOG_INFO("APP_USBD_HID_USER_EVT_IN_REPORT_DONE");
+            NRF_LOG_DEBUG("APP_USBD_HID_USER_EVT_IN_REPORT_DONE");
             usbd_send_keyboard_buffered(&m_app_hid_kbd);
             break;
         default:
@@ -438,10 +473,10 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
             break;
         case APP_USBD_EVT_STOPPED:
             app_usbd_disable();
-            NRF_LOG_INFO("USB disable");
+            NRF_LOG_DEBUG("USB disable");
             break;
         case APP_USBD_EVT_POWER_DETECTED:
-            NRF_LOG_INFO("USB power detected");
+            NRF_LOG_DEBUG("USB power detected");
             if (!nrf_drv_usbd_is_enabled())
             {
                 app_usbd_enable();
@@ -460,7 +495,7 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
 #endif
             break;
         case APP_USBD_EVT_POWER_READY:
-            NRF_LOG_INFO("USB ready");
+            NRF_LOG_DEBUG("USB ready");
             app_usbd_start();
             break;
         default:
@@ -480,7 +515,7 @@ int usbd_init(void) {
   ret = app_usbd_init(&usbd_config);
   APP_ERROR_CHECK(ret);
 
-  NRF_LOG_INFO("Hello USB!\r\n");
+  NRF_LOG_DEBUG("Hello USB!\r\n");
 
   app_usbd_class_inst_t const * class_inst_kbd;
   class_inst_kbd = app_usbd_hid_kbd_class_inst_get(&m_app_hid_kbd);
@@ -525,9 +560,9 @@ void usbd_process(void) {
 int usbd_send_kbd_report(app_usbd_hid_kbd_t const *  p_kbd, report_keyboard_t *report);
 int usbd_send_mouse_report(app_usbd_hid_mouse_t const *  p_mouse, report_mouse_t *report);
 int usbd_send_keyboard(report_keyboard_t *report) {
-  NRF_LOG_INFO("%d", report->keys[0]);
+  NRF_LOG_DEBUG("%d", report->keys[0]);
   uint8_t res = usbd_send_kbd_report(&m_app_hid_kbd, report);
-  NRF_LOG_INFO("res:%d", res);
+  NRF_LOG_DEBUG("res:%d", res);
   return res;
 }
 

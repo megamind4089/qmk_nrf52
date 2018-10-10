@@ -27,13 +27,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static nrf_saadc_value_t       adc_buffer[1]; /**< ADC buffer. */
 static void adc_event_handler(nrf_drv_saadc_evt_t const * p_event)
 {
-  NRF_LOG_INFO("conversion start\r\n");
+  NRF_LOG_DEBUG("conversion start\r\n");
     if (p_event->type == NRF_DRV_SAADC_EVT_DONE)
     {
         uint32_t i;
         for (i = 0; i < p_event->data.done.size; i++)
         {
-            NRF_LOG_INFO("Current sample value: %d mV\r\n", get_vcc());
+            NRF_LOG_DEBUG("Current sample value: %d mV\r\n", get_vcc());
         }
 //        nrf_adc_disable();
     }

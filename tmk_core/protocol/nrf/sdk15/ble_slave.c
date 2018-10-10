@@ -172,7 +172,7 @@ static void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const *
     if ((m_conn_handle == p_evt->conn_handle) && (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED))
     {
         m_ble_nus_max_data_len = p_evt->params.att_mtu_effective - OPCODE_LENGTH - HANDLE_LENGTH;
-        NRF_LOG_INFO("Data len is set to 0x%X(%d)", m_ble_nus_max_data_len, m_ble_nus_max_data_len);
+        NRF_LOG_DEBUG("Data len is set to 0x%X(%d)", m_ble_nus_max_data_len, m_ble_nus_max_data_len);
     }
     NRF_LOG_DEBUG("ATT MTU exchange completed. central 0x%x peripheral 0x%x",
                   p_gatt->att_mtu_desired_central,
@@ -230,12 +230,13 @@ static void pm_evt_handler(pm_evt_t const * p_evt) {
 //  NRF_LOG_INFO("pm_evt_handler %d", p_evt->evt_id);
   switch (p_evt->evt_id) {
   case PM_EVT_BONDED_PEER_CONNECTED: {
-    NRF_LOG_INFO("Connected to a previously bonded device.");
+    NRF_LOG_DEBUG("Connected to a previously bonded device.");
   }
     break;
 
   case PM_EVT_CONN_SEC_SUCCEEDED: {
-    NRF_LOG_INFO(
+    NRF_LOG_INFO("Connected to master keyboard:%d", p_evt->peer_id);
+    NRF_LOG_DEBUG(
         "Connection secured: role: %d, conn_handle: 0x%x, procedure: %d.",
         ble_conn_state_role(p_evt->conn_handle), p_evt->conn_handle,
         p_evt->params.conn_sec_succeeded.procedure);
@@ -585,7 +586,6 @@ static void on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context) {
 
   switch (p_ble_evt->header.evt_id) {
   case BLE_GAP_EVT_CONNECTED:
-    NRF_LOG_INFO("Connected");
 //            err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
 //            APP_ERROR_CHECK(err_code);
     m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
@@ -594,7 +594,7 @@ static void on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context) {
     break; // BLE_GAP_EVT_CONNECTED
 
   case BLE_GAP_EVT_DISCONNECTED:
-    NRF_LOG_INFO("Disconnected");
+    NRF_LOG_INFO("Disconnected from master keyboard");
 //
 //            err_code = bsp_indication_set(BSP_INDICATE_IDLE);
 //            APP_ERROR_CHECK(err_code);
@@ -813,6 +813,10 @@ void logger_init(void) {
   APP_ERROR_CHECK(err_code);
 
   NRF_LOG_DEFAULT_BACKENDS_INIT();
+  extern const nrf_log_backend_api_t nrf_log_backend_cdc_acm_api;
+  static nrf_log_backend_t backend = {.p_api = &nrf_log_backend_cdc_acm_api};
+  nrf_log_backend_add(&backend, NRF_LOG_SEVERITY_INFO);
+  nrf_log_backend_enable(&backend);
 
   power_management_init();
 }
@@ -852,6 +856,7 @@ void advertising_start(void) {
 
   ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
   APP_ERROR_CHECK(ret);
+  NRF_LOG_INFO("Advertising start...");
 }
 
 void main_task_start(uint8_t interval_ms) {

@@ -208,6 +208,7 @@ void scan_start(void) {
 
   if (m_conn_handle != BLE_CONN_HANDLE_INVALID) return;
 
+  NRF_LOG_DEBUG("Chekck fstorage...");
   if (!nrf_fstorage_is_busy(NULL)) {
     (void) sd_ble_gap_scan_stop();
 
@@ -252,14 +253,19 @@ void scan_start(void) {
 
     err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
     // It is okay to ignore this error since we are stopping the scan anyway.
-    if (err_code != NRF_ERROR_INVALID_STATE) {
-      APP_ERROR_CHECK(err_code);
+    if (err_code != NRF_SUCCESS) {
+      NRF_LOG_ERROR("scan start error: %d", err_code);
+//      APP_ERROR_CHECK(err_code);
+    } else {
+      NRF_LOG_INFO("Scanning slave keyboard...");
     }
+  } else {
+    NRF_LOG_INFO("Fstorage is busy");
   }
 }
 
 __WEAK void ble_nus_packetrcv_handler(ble_switch_state_t* buf, uint8_t len) {
-  NRF_LOG_INFO("nus packet received");
+  NRF_LOG_DEBUG("nus packet received");
 }
 
 __WEAK void ble_nus_on_disconnect() {
@@ -294,11 +300,11 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c,
 
     err_code = ble_nus_c_tx_notif_enable(p_ble_nus_c);
     APP_ERROR_CHECK(err_code);
-    NRF_LOG_INFO("The device has the Nordic UART Service\r\n");
+    NRF_LOG_DEBUG("The device has the Nordic UART Service\r\n");
     break;
 
   case BLE_NUS_C_EVT_NUS_TX_EVT:
-    NRF_LOG_INFO("NUS:Received\r\n");
+    NRF_LOG_DEBUG("NUS:Received\r\n");
     ble_nus_packetrcv_handler((ble_switch_state_t*) p_ble_nus_evt->p_data,
         p_ble_nus_evt->data_len/sizeof(ble_switch_state_t));
     // for (uint32_t i = 0; i < p_ble_nus_evt->data_len; i++)
@@ -309,7 +315,8 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c,
 
   case BLE_NUS_C_EVT_DISCONNECTED:
     m_conn_handle = BLE_CONN_HANDLE_INVALID;
-    NRF_LOG_INFO("NUS:Disconnected\r\n");
+    NRF_LOG_DEBUG("NUS:Disconnected\r\n");
+    NRF_LOG_INFO("Slave keyboard is disconnected");
     ble_nus_on_disconnect();
     scan_start();
     break;
@@ -333,7 +340,7 @@ static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report) {
       // scan is automatically stopped by the connect
 //      err_code = bsp_indication_set(BSP_INDICATE_IDLE);
 //      APP_ERROR_CHECK(err_code);
-      NRF_LOG_INFO("Connecting to target %02x%02x%02x%02x%02x%02x",
+      NRF_LOG_DEBUG("Connecting to target %02x%02x%02x%02x%02x%02x",
           p_adv_report->peer_addr.addr[0], p_adv_report->peer_addr.addr[1],
           p_adv_report->peer_addr.addr[2], p_adv_report->peer_addr.addr[3],
           p_adv_report->peer_addr.addr[4], p_adv_report->peer_addr.addr[5]);
@@ -360,7 +367,7 @@ static void on_ble_central_conn_evt(const ble_evt_t * const p_ble_evt) {
     break; // BLE_GAP_EVT_ADV_REPORT
 
   case BLE_GAP_EVT_CONNECTED:
-    NRF_LOG_INFO("Connected to target");
+    NRF_LOG_INFO("Connected to the slave keyboard");
     err_code = ble_nus_c_handles_assign(&m_ble_nus_c,
         p_ble_evt->evt.gap_evt.conn_handle, NULL);
     APP_ERROR_CHECK(err_code);
