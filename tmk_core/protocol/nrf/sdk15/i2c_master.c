@@ -10,8 +10,8 @@ void i2c_init(void)
 {
   const nrfx_twi_config_t config =
   {
-     .scl                = 32,
-     .sda                = 32,
+     .scl                = 16,
+     .sda                = 18,
      .frequency          = NRF_TWI_FREQ_400K,
      .interrupt_priority = APP_IRQ_PRIORITY_LOW,
      .hold_bus_uninit     = false
@@ -26,11 +26,15 @@ void i2c_uninit(void) {
 
 uint8_t i2c_transmit(uint8_t address, uint8_t* data, uint16_t length)
 {
-  return nrfx_twi_rx(&m_twi_master, address, data, length);
+  return nrfx_twi_tx(&m_twi_master, address, data, length, false);
 }
 
 uint8_t i2c_receive(uint8_t address, uint8_t* data, uint16_t length)
 {
-  return nrfx_twi_tx(&m_twi_master, address, data, length, false);
+  return nrfx_twi_rx(&m_twi_master, address, data, length);
 }
 
+uint8_t i2c_readReg(uint8_t devaddr, uint8_t regaddr, uint8_t* data, uint16_t length, uint16_t timeout) {
+  nrfx_twi_tx(&m_twi_master, devaddr, &regaddr, 1, true);
+  return nrfx_twi_rx(&m_twi_master, devaddr, data, length);
+}
