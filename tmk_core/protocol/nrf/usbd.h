@@ -13,6 +13,11 @@ int usbd_send_consumer(uint16_t data);
 int usbd_send_abs_mouse(uint8_t x, uint8_t y);
 int usbd_send_cdc_acm(uint8_t *dat, uint8_t cnt);
 
+// Functions for CLI
+int cdc_acm_byte_to_read();
+void cdc_acm_putc(char c);
+char cdc_acm_getc();
+
 #else
 int usbd_init(void) {return 0;}
 void usbd_enable(void) {}

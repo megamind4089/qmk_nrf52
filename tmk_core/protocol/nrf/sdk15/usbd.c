@@ -45,6 +45,7 @@
 
 #include "host.h"
 #include "usb_descriptor.h"
+#include "cli.h"
 
 #ifdef RGBLIGHT_ENABLE
 #include "rgblight.h"
@@ -260,33 +261,78 @@ APP_USBD_CDC_ACM_GLOBAL_DEF(m_app_cdc_acm, cdc_acm_user_ev_handler,
     APP_USBD_INTERFACE_CDC_ACM_COMM, APP_USBD_INTERFACE_CDC_ACM_DATA, CDC_ACM_COMM_EPIN,
     CDC_ACM_DATA_EPIN, CDC_ACM_DATA_EPOUT, APP_USBD_CDC_COMM_PROTOCOL_AT_V250);
 
-#define READ_SIZE 1
+typedef struct {
+  uint8_t* const buf;
+  uint16_t widx, ridx, cnt;
+  const uint16_t len;
+} struct_queue;
 
-static char m_rx_buffer[READ_SIZE];
+#define USB_SERIAL_TX_QUEUE_SIZE 1024UL
+#define USB_SERIAL_RX_QUEUE_SIZE 64
+static uint8_t tx_buf[USB_SERIAL_TX_QUEUE_SIZE], rx_buf[USB_SERIAL_RX_QUEUE_SIZE];
+struct_queue tx_queue={tx_buf, 0, 0, 0, USB_SERIAL_TX_QUEUE_SIZE},
+    rx_queue={rx_buf, 0, 0, 0, USB_SERIAL_RX_QUEUE_SIZE};
+
+size_t push_queue(struct_queue *q, uint8_t dat) {
+  if (q->cnt < q->len) {
+    q->buf[q->widx++] = dat;
+    q->widx %= q->len;
+    q->cnt++;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+size_t pop_queue(struct_queue *q, uint8_t *dat) {
+  if (q->cnt) {
+    *dat = q->buf[q->ridx++];
+    q->ridx %= q->len;
+    q->cnt--;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+#define READ_SIZE 1
+static char m_rx_buffer[NRF_DRV_USBD_EPSIZE];
 static char m_tx_buffer[NRF_DRV_USBD_EPSIZE];
 static bool m_send_flag = 0;
-
 
 static void usbd_send_cdc_acm_internal(void const* p_context, char const *buf, size_t len) {
   ret_code_t ret;
   if (!m_send_flag) {
+    len = len & 0xFF;
+    memcpy(m_tx_buffer, buf, len);
     ret = app_usbd_cdc_acm_write(&m_app_cdc_acm, m_tx_buffer, len);
-    if(ret==NRF_SUCCESS) {
+    if (ret == NRF_SUCCESS) {
       m_send_flag = true;
+    }
+  } else {
+    uint8_t *p = (uint8_t*)buf;
+    while (len--) {
+      push_queue(&tx_queue, *p++);
     }
   }
 }
+
 void usbd_send_cdc_acm(uint8_t *buf, uint8_t len) {
-  if (!m_send_flag) {
-    len = len & 0xFF;
-    memcpy(m_tx_buffer, buf, len);
-    usbd_send_cdc_acm_internal(NULL, m_tx_buffer, len);
+  usbd_send_cdc_acm_internal(NULL, (char const*)buf, len);
+}
+
+void usbd_send_cdc_acm_queued(struct_queue *q) {
+  uint8_t buf[NRF_DRV_USBD_EPSIZE];
+  uint8_t dat;
+  uint8_t idx=0;
+  while (idx<sizeof(buf) && pop_queue(q, &dat)==1) {
+    buf[idx++] = dat;
   }
+  usbd_send_cdc_acm(buf, idx);
 }
 
 #include "nrf_log_backend_serial.h"
 #include "nrf_log_internal.h"
-//void nrf_log_backend_cdc_acm_init(void);
 
 static void nrf_log_backend_cdc_acm_put(nrf_log_backend_t const * p_backend,
                                      nrf_log_entry_t * p_msg){
@@ -299,8 +345,6 @@ static void nrf_log_backend_cdc_acm_flush(nrf_log_backend_t const * p_backend)
 
 static void nrf_log_backend_cdc_acm_panic_set(nrf_log_backend_t const * p_backend)
 {
-//    nrf_drv_uart_uninit(&m_uart);
-//    uart_init(false);
 }
 
 const nrf_log_backend_api_t nrf_log_backend_cdc_acm_api = {
@@ -329,21 +373,38 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const * p_inst,
     break;
   case APP_USBD_CDC_ACM_USER_EVT_TX_DONE:
     m_send_flag = false;
+    if (tx_queue.cnt) {
+      usbd_send_cdc_acm_queued(&tx_queue);
+    }
     break;
   case APP_USBD_CDC_ACM_USER_EVT_RX_DONE: {
     // Echoback
     UNUSED_VARIABLE(p_cdc_acm);
-//    ret_code_t ret;
-//    do {
-//      /*Get amount of data transfered*/
-//      size_t size = app_usbd_cdc_acm_rx_size(p_cdc_acm);
-//
-//      /* Fetch data until internal buffer is empty */
-//      ret = app_usbd_cdc_acm_read(&m_app_cdc_acm, m_rx_buffer,
-//          READ_SIZE);
-//    } while (ret == NRF_SUCCESS);
-//
-//    usbd_send_cdc_acm((uint8_t*)m_rx_buffer, 1);
+    ret_code_t ret;
+    uint8_t idx=0;
+    size_t size = app_usbd_cdc_acm_rx_size(p_cdc_acm);
+    while (size--) {
+      push_queue(&rx_queue, m_rx_buffer[idx++]);
+    }
+
+    /*Get amount of data waiting*/
+    size = app_usbd_cdc_acm_bytes_stored(p_cdc_acm);
+    if (size) {
+      size = NRF_DRV_USBD_EPSIZE > size ? size : NRF_DRV_USBD_EPSIZE;
+      /* Fetch data until internal buffer is empty */
+      ret = app_usbd_cdc_acm_read(&m_app_cdc_acm, m_rx_buffer, size);
+      idx = 0;
+      while (size--) {
+        push_queue(&rx_queue, m_rx_buffer[idx++]);
+      }
+      UNUSED_VARIABLE(ret);
+//      usbd_send_cdc_acm((uint8_t*) m_rx_buffer, size);
+    }
+
+    // wait next transfer
+    ret = app_usbd_cdc_acm_read(&m_app_cdc_acm, m_rx_buffer,
+    READ_SIZE);
+    UNUSED_VARIABLE(ret);
 
     break;
   }
@@ -352,6 +413,19 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const * p_inst,
   }
 }
 
+int cdc_acm_byte_to_read() {
+  return (int)rx_queue.cnt;
+}
+
+void cdc_acm_putc(char c) {
+  usbd_send_cdc_acm((uint8_t*)&c, 1);
+}
+
+char cdc_acm_getc() {
+  uint8_t dat;
+  pop_queue(&rx_queue, &dat);
+  return (char)dat;
+}
 
 /*lint -restore*/
 
@@ -542,6 +616,8 @@ int usbd_init(void) {
   ret = app_usbd_class_append(class_cdc_acm);
   APP_ERROR_CHECK(ret);
 
+  cli_init();
+
   return 0;
 }
 
@@ -555,6 +631,7 @@ void usbd_process(void) {
   while (app_usbd_event_queue_process()) {
     continue;/* Nothing to do */
   }
+  cli_exec();
 }
 
 int usbd_send_kbd_report(app_usbd_hid_kbd_t const *  p_kbd, report_keyboard_t *report);

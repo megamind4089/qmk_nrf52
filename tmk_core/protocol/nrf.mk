@@ -11,13 +11,25 @@ endif
 ifeq ($(MCU_FAMILY),NRF52)
   SRC += $(NRF_DIR)/nrf52/adc.c
 endif
+
+ifeq ($(NRFSDK_VER),15)
+  SRC += $(NRF_DIR)/sdk15/ble_common.c
+endif
   
 ifeq ($(MCU_SERIES), NRF52840)
  SRC += $(NRF_DIR)/$(NRF_VER_DIR)/usbd.c \
        $(NRF_DIR)/$(NRF_VER_DIR)/app_usbd_hid_kbd.c \
        $(NRF_DIR)/$(NRF_VER_DIR)/app_usbd_hid_mouse.c \
        $(NRF_DIR)/$(NRF_VER_DIR)/i2c_master.c \
+       $(NRF_DIR)/$(NRF_VER_DIR)/cli.c \
+       $(NRF_DIR)/microshell/core/microshell.c \
+       $(NRF_DIR)/microshell/core/mscore.c \
+       $(NRF_DIR)/microshell/util/mscmd.c \
+       $(NRF_DIR)/microshell/util/msopt.c \
+       $(NRF_DIR)/microshell/util/ntlibc.c \
 
+VPATH += $(TMK_PATH)/$(NRF_DIR)/microshell/core
+VPATH += $(TMK_PATH)/$(NRF_DIR)/microshell/util
 endif
 
 ifeq ($(strip $(NRF_SEPARATE)), slave)

@@ -102,6 +102,7 @@ void print_set_sendchar(int8_t (*print_sendchar_func)(uint8_t));
 #elif defined(PROTOCOL_NRF)
 
 #  include "nrf/printf.h"
+#  include "nrf_log.h"
 
 #  ifdef USER_PRINT /* USER_PRINT */
 
@@ -118,12 +119,12 @@ void print_set_sendchar(int8_t (*print_sendchar_func)(uint8_t));
 #  else /* NORMAL PRINT */
 
 // Create user & normal print defines
-#    define print(s)     tfp_printf(s)
-#    define println(s)   tfp_printf(s "\r\n")
-#    define xprintf      tfp_printf
-#    define uprint(s)    tfp_printf(s)
-#    define uprintln(s)  tfp_printf(s "\r\n")
-#    define uprintf      tfp_printf
+#    define print(s)     NRF_LOG_INFO(s)
+#    define println(s)   NRF_LOG_INFO(s "\r\n")
+#    define xprintf      NRF_LOG_INFO
+#    define uprint(s)    NRF_LOG_INFO(s)
+#    define uprintln(s)  NRF_LOG_INFO(s "\r\n")
+#    define uprintf      NRF_LOG_INFO
 
 #  endif /* USER_PRINT / NORMAL PRINT */
 

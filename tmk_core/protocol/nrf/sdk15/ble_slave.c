@@ -67,6 +67,7 @@
 
 #include "matrix.h"
 #include "ble_slave.h"
+#include "ble_common.h"
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2        /**< Reply when unsupported features are requested. */
 
@@ -482,24 +483,6 @@ void conn_params_init(void) {
   APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for putting the chip into sleep mode.
- *
- * @note This function will not return.
- */
-static void sleep_mode_enter(void) {
-  extern const uint32_t row_pins[THIS_DEVICE_ROWS];
-  extern const uint32_t col_pins[THIS_DEVICE_COLS];
-  int i;
-  for (i=0; i<THIS_DEVICE_ROWS; i++) {
-    nrf_gpio_pin_clear(row_pins[i]);
-  }
-  for (i=0; i<THIS_DEVICE_COLS; i++) {
-    nrf_gpio_cfg_sense_input(col_pins[i], NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
-  }
-
-  sd_power_system_off();
-}
-
 /**@brief Function for handling advertising events.
  *
  * @details This function will be called for advertising events which are passed to the application.
@@ -729,29 +712,6 @@ void ble_stack_init(void) {
 
 }
 
-/**@brief Fetch the list of peer manager peer IDs.
- *
- * @param[inout] p_peers   The buffer where to store the list of peer IDs.
- * @param[inout] p_size    In: The size of the @p p_peers buffer.
- *                         Out: The number of peers copied in the buffer.
- */
-void peer_list_get(pm_peer_id_t * p_peers, uint32_t * p_size) {
-  pm_peer_id_t peer_id;
-  uint32_t peers_to_copy;
-
-  peers_to_copy =
-      (*p_size < BLE_GAP_WHITELIST_ADDR_MAX_COUNT) ?
-          *p_size : BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
-
-  peer_id = pm_next_peer_id_get(PM_PEER_ID_INVALID);
-  *p_size = 0;
-
-  while ((peer_id != PM_PEER_ID_INVALID) && (peers_to_copy--)) {
-    p_peers[(*p_size)++] = peer_id;
-    peer_id = pm_next_peer_id_get(peer_id);
-  }
-}
-
 /**@brief Function for initializing the Advertising functionality.
  */
 void advertising_init(void) {
@@ -791,39 +751,9 @@ void advertising_init(void) {
   ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
 }
 
-/**@brief Function for placing the application in low power state while waiting for events.
- */
-static void power_manage(void) {
-  nrf_pwr_mgmt_run();
-}
-
 uint32_t ble_nus_send_bytes(uint8_t* buf, uint16_t len) {
   uint32_t err_code = ble_nus_data_send(&m_nus, buf, &len, m_conn_handle);
   return err_code;
-}
-
-static void power_management_init(void) {
-  ret_code_t err_code;
-  err_code = nrf_pwr_mgmt_init();
-  APP_ERROR_CHECK(err_code);
-}
-
-void logger_init(void) {
-  ret_code_t err_code = NRF_LOG_INIT(NULL);
-  APP_ERROR_CHECK(err_code);
-
-  NRF_LOG_DEFAULT_BACKENDS_INIT();
-  extern const nrf_log_backend_api_t nrf_log_backend_cdc_acm_api;
-  static nrf_log_backend_t backend = {.p_api = &nrf_log_backend_cdc_acm_api};
-  nrf_log_backend_add(&backend, NRF_LOG_SEVERITY_INFO);
-  nrf_log_backend_enable(&backend);
-
-  power_management_init();
-}
-
-/**@brief Function for the Event Scheduler initialization.
- */
-void scheduler_init(void) {
 }
 
 void timers_init(void (*main_task)(void*)) {
@@ -832,6 +762,17 @@ void timers_init(void (*main_task)(void*)) {
   APP_ERROR_CHECK(
       app_timer_create(&main_task_timer_id, APP_TIMER_MODE_REPEATED,
           main_task));
+}
+
+void ble_disconnect() {
+  sd_ble_gap_adv_stop(m_advertising.adv_handle);
+  if (m_conn_handle != BLE_CONN_HANDLE_INVALID) {
+    ret_code_t err_code = sd_ble_gap_disconnect(m_conn_handle,
+    BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+    if (err_code != NRF_ERROR_INVALID_STATE) {
+      APP_ERROR_CHECK(err_code);
+    }
+  }
 }
 
 void advertising_start(void) {
@@ -863,14 +804,4 @@ void main_task_start(uint8_t interval_ms) {
   uint32_t err_code = app_timer_start(main_task_timer_id,
       APP_TIMER_TICKS(interval_ms), NULL);
   APP_ERROR_CHECK(err_code);
-}
-
-void main_loop(void) {
-  if (NRF_LOG_PROCESS() == false) {
-    power_manage();
-  }
-}
-
-void delete_bonds() {
-  pm_peers_delete();
 }

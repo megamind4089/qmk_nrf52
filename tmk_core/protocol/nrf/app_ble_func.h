@@ -19,6 +19,7 @@ __WEAK void ble_nus_on_disconnect();
 
 uint32_t ble_nus_send_bytes(uint8_t* buf, uint16_t len);
 
+void ble_disconnect();
 void restart_advertising_wo_whitelist(void);
 void restart_advertising_id(uint8_t id);
 void delete_bonds(void);

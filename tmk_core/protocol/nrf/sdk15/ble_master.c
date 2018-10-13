@@ -78,6 +78,7 @@
 
 #include "ble_central.h"
 #include "adc.h"
+#include "ble_common.h"
 
 #define SHIFT_BUTTON_ID                     1                                          /**< Button used as 'SHIFT' Key. */
 
@@ -199,40 +200,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name) {
   app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
-/**@brief Fetch the list of peer manager peer IDs.
- *
- * @param[inout] p_peers   The buffer where to store the list of peer IDs.
- * @param[inout] p_size    In: The size of the @p p_peers buffer.
- *                         Out: The number of peers copied in the buffer.
- */
-static void peer_list_get(pm_peer_id_t * p_peers, uint32_t * p_size) {
-  pm_peer_id_t peer_id;
-  uint32_t peers_to_copy;
-
-  peers_to_copy =
-      (*p_size < BLE_GAP_WHITELIST_ADDR_MAX_COUNT) ?
-          *p_size : BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
-
-  peer_id = pm_next_peer_id_get(PM_PEER_ID_INVALID);
-  *p_size = 0;
-
-  while ((peer_id != PM_PEER_ID_INVALID) && (peers_to_copy--)) {
-    p_peers[(*p_size)++] = peer_id;
-    peer_id = pm_next_peer_id_get(peer_id);
-  }
-}
-
-/**@brief Clear bond information from persistent storage.
- */
-void delete_bonds(void) {
-  ret_code_t err_code;
-
-  NRF_LOG_INFO("Erase all bonds!");
-
-  err_code = pm_peers_delete();
-  APP_ERROR_CHECK(err_code);
-}
-
 /**@brief Function for starting advertising.
  */
 //void advertising_start(bool erase_bonds) {
@@ -264,6 +231,19 @@ void advertising_start() {
   }
 //  }
 }
+
+void ble_disconnect() {
+  sd_ble_gap_adv_stop(m_advertising.adv_handle);
+  if (m_conn_handle != BLE_CONN_HANDLE_INVALID) {
+    ret_code_t err_code = sd_ble_gap_disconnect(m_conn_handle,
+    BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+    if (err_code != NRF_ERROR_INVALID_STATE) {
+      APP_ERROR_CHECK(err_code);
+    }
+  }
+}
+
+
 
 /**@brief Function for handling Peer Manager events.
  *
@@ -781,28 +761,6 @@ void timers_start(void) {
       NULL);
   APP_ERROR_CHECK(err_code);
 }
-/**@brief Function for handling the HID Report Characteristic Write event.
- *
- * @param[in]   p_evt   HID service event.
- */
-
-/**@brief Function for putting the chip into sleep mode.
- *
- * @note This function will not return.
- */
-void sleep_mode_enter(void) {
-  extern const uint32_t row_pins[THIS_DEVICE_ROWS];
-  extern const uint32_t col_pins[THIS_DEVICE_COLS];
-  int i;
-  for (i=0; i<THIS_DEVICE_ROWS; i++) {
-    nrf_gpio_pin_clear(row_pins[i]);
-  }
-  for (i=0; i<THIS_DEVICE_COLS; i++) {
-    nrf_gpio_cfg_sense_input(col_pins[i], NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
-  }
-
-  sd_power_system_off();
-}
 
 /**@brief Function for handling HID events.
  *
@@ -1040,12 +998,6 @@ void ble_stack_init(void) {
       NULL);
 }
 
-/**@brief Function for the Event Scheduler initialization.
- */
-void scheduler_init(void) {
-  APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
-}
-
 /**@brief Function for the Peer Manager initialization.
  */
 void peer_manager_init(void) {
@@ -1277,40 +1229,6 @@ void sendchar_pf(void *p, char c) {
   sendchar((uint8_t) c);
 }
 
-/**@brief Function for initializing power management.
- */
-static void power_management_init(void) {
-  ret_code_t err_code;
-  err_code = nrf_pwr_mgmt_init();
-  APP_ERROR_CHECK(err_code);
-}
-/**@brief Function for initializing the nrf log module.
- */
-void logger_init(void) {
-  ret_code_t err_code = NRF_LOG_INIT(NULL);
-  APP_ERROR_CHECK(err_code);
-
-  NRF_LOG_DEFAULT_BACKENDS_INIT();
-  extern const nrf_log_backend_api_t nrf_log_backend_cdc_acm_api;
-  static nrf_log_backend_t backend = {.p_api = &nrf_log_backend_cdc_acm_api};
-  nrf_log_backend_add(&backend, NRF_LOG_SEVERITY_INFO);
-  nrf_log_backend_enable(&backend);
-
-  power_management_init();
-}
-
-/**@brief Function for handling the idle state (main loop).
- *
- * @details If there is no pending log operation, then sleep until next the next event occurs.
- */
-void main_loop() {
-//  app_sched_execute();
-  if (NRF_LOG_PROCESS() == false) {
-    nrf_pwr_mgmt_run();
-//   sd_app_evt_wait();
-  }
-}
-
 void main_task_start(uint8_t interval_ms) {
   uint32_t err_code = app_timer_start(main_task_timer_id, APP_TIMER_TICKS(interval_ms),
       NULL);
@@ -1415,23 +1333,6 @@ void restart_advertising_id(uint8_t id) {
 //  APP_ERROR_CHECK(ret);
 }
 
-void delete_bond_id(uint8_t id) {
-  ret_code_t err_code;
-
-  sd_ble_gap_adv_stop(m_advertising.adv_handle);
-  if (m_conn_handle != BLE_CONN_HANDLE_INVALID) {
-    err_code = sd_ble_gap_disconnect(m_conn_handle,
-        BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-    if (err_code != NRF_ERROR_INVALID_STATE) {
-      APP_ERROR_CHECK(err_code);
-    }
-  }
-
-  NRF_LOG_INFO("Erase bonds ID: %d", id);
-
-  err_code = pm_peer_delete(id);
-  APP_ERROR_CHECK(err_code);
-}
 
 static bool enable_ble_send = true;
 static bool enable_usb_send = false;
