@@ -50,7 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "suspend.h"
 #include "wait.h"
 
-#define MAINTASK_INTERVAL 17
+const uint8_t MAINTASK_INTERVAL=17;
 
 /* -------------------------
  *   TMK host driver defs

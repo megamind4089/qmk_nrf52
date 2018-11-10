@@ -686,6 +686,35 @@ static void on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context) {
 //
 //}
 
+// Radio event setting for master and slave synchronization
+void radio_event_callback(bool active);
+void SWI1_IRQHandler(void) {
+  radio_event_callback(false);
+}
+uint32_t ble_radio_notification_init(uint32_t irq_priority, uint8_t distance) {
+  uint32_t err_code;
+
+  // Initialize Radio Notification software interrupt
+  err_code = sd_nvic_ClearPendingIRQ(SWI1_IRQn);
+  if (err_code != NRF_SUCCESS) {
+    return err_code;
+  }
+
+  err_code = sd_nvic_SetPriority(SWI1_IRQn, irq_priority);
+  if (err_code != NRF_SUCCESS) {
+    return err_code;
+  }
+
+  err_code = sd_nvic_EnableIRQ(SWI1_IRQn);
+  if (err_code != NRF_SUCCESS) {
+    return err_code;
+  }
+
+  // Configure the event
+  return sd_radio_notification_cfg_set(NRF_RADIO_NOTIFICATION_TYPE_INT_ON_INACTIVE,
+      distance);
+}
+
 
 /**@brief Function for the SoftDevice initialization.
  *
@@ -707,6 +736,8 @@ void ble_stack_init(void) {
   err_code = nrf_sdh_ble_enable(&ram_start);
   APP_ERROR_CHECK(err_code);
 
+  ble_radio_notification_init(3,
+        NRF_RADIO_NOTIFICATION_DISTANCE_800US);
   // Register a handler for BLE events.
   NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, on_ble_evt, NULL);
 

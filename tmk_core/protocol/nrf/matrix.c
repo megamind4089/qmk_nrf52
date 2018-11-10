@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "nrf_gpio.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
+#include "ble_radio_notification.h"
 
 #include "app_ble_func.h"
 
@@ -47,14 +48,49 @@ static uint8_t debouncing = DEBOUNCE;
 
 /* matrix state(1:on, 0:off) */
 static matrix_row_t matrix[MATRIX_ROWS];
+static matrix_row_t matrix_dummy[MATRIX_ROWS];
 static matrix_row_t matrix_debouncing[MATRIX_ROWS];
 
+static bool send_flag;
 #define QUEUE_LEN 32
-struct {
-  ble_switch_state_t received_keys[QUEUE_LEN];
+typedef struct {
+  ble_switch_state_t* const buf;
   uint8_t ridx, widx, cnt;
-} rcv_keys_queue;
+  const uint8_t len;
+} switch_queue;
+ble_switch_state_t rcv_keys_buf[QUEUE_LEN], delay_keys_buf[QUEUE_LEN];
+switch_queue rcv_keys_queue={rcv_keys_buf, 0, 0, 0, sizeof(rcv_keys_buf)/sizeof(rcv_keys_buf[0])};
+switch_queue delay_keys_queue={delay_keys_buf, 0, 0, 0, sizeof(delay_keys_buf)/sizeof(delay_keys_buf[0])};
+#ifndef BURST_TRESHOLD
+  extern const uint8_t MAINTASK_INTERVAL;
+  #define BURST_THRESHOLD (BLE_NUS_MAX_INTERVAL/MAINTASK_INTERVAL+1)
+#endif
 
+static size_t push_queue(switch_queue *q, ble_switch_state_t dat) {
+  if (q->cnt < q->len) {
+    q->buf[q->widx++] = dat;
+    q->widx %= q->len;
+    q->cnt++;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+static size_t pop_queue(switch_queue *q, ble_switch_state_t *dat) {
+  if (q->cnt) {
+    *dat = q->buf[q->ridx++];
+    q->ridx %= q->len;
+    q->cnt--;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+static ble_switch_state_t front_queue(switch_queue *q){
+  return q->buf[q->ridx];
+}
 
 static void init_rows(void);
 static void init_cols(void);
@@ -86,26 +122,37 @@ uint8_t matrix_cols(void)
 #define LED_OFF()   do { } while (0)
 #define LED_TGL()   do { } while (0)
 
-void matrix_init(void)
-{
-    // initialize row and col
-    init_rows();
-    unselect_rows();
-    init_cols();
-    NRF_LOG_INFO("matrix init\r\n")
-
-    // initialize matrix state: all keys off
-    for (uint8_t i=0; i < MATRIX_ROWS; i++) {
-        matrix[i] = 0;
-        matrix_debouncing[i] = 0;
-    }
-
-    matrix_init_user();
+ret_code_t ret_radio = 0xFFFF;
+static uint8_t timing;
+static uint8_t sync;
+void radio_event_callback(bool active){
+  if(!active && send_flag){
+#ifdef NRF_SEPARATE_KEYBOARD_SLAVE
+    sync = timing;
+    send_flag = false;
+#endif
+  }
 }
 
-static inline void set_received_key(ble_switch_state_t key) {
+void matrix_init(void) {
+  // initialize row and col
+  init_rows();
+  unselect_rows();
+  init_cols();
+//    NRF_LOG_INFO("matrix init\r\n")
+
+// initialize matrix state: all keys off
+  for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
+    matrix[i] = 0;
+    matrix_debouncing[i] = 0;
+  }
+
+  matrix_init_user();
+}
+
+static inline void set_received_key(ble_switch_state_t key, bool from_slave) {
 #if defined(NRF_SEPARATE_KEYBOARD_MASTER) || defined(NRF_SEPARATE_KEYBOARD_SLAVE)
-  const uint8_t matrix_offset = isLeftHand ? THIS_DEVICE_ROWS : 0;
+  const uint8_t matrix_offset = (isLeftHand&&from_slave) ? THIS_DEVICE_ROWS : 0;
   if (key.state) {
     matrix[key.row + matrix_offset] |= (1 << key.col);
   } else {
@@ -121,7 +168,6 @@ uint8_t matrix_scan(void)
 
   uint8_t matrix_offset = isLeftHand ? 0 : MATRIX_ROWS-THIS_DEVICE_ROWS;
   volatile int matrix_changed = 0;
-  static uint8_t timing;
   ble_switch_state_t ble_switch_send[THIS_DEVICE_ROWS*THIS_DEVICE_COLS];
 
   for (uint8_t i = 0; i < THIS_DEVICE_ROWS; i++) {
@@ -140,23 +186,31 @@ uint8_t matrix_scan(void)
 //            wait_ms(1);
     } else {
       for (uint8_t i = 0; i < THIS_DEVICE_ROWS; i++) {
-        if (matrix[i + matrix_offset] != matrix_debouncing[i + matrix_offset]) {
+        if (matrix_dummy[i + matrix_offset] != matrix_debouncing[i + matrix_offset]) {
           for (uint8_t j = 0; j < THIS_DEVICE_COLS; j++) {
-            if ((matrix[i + matrix_offset]
+            if ((matrix_dummy[i + matrix_offset]
                 ^ matrix_debouncing[i + matrix_offset]) & (1 << j)) {
-              ble_switch_send[matrix_changed].timing = timing;
-              ble_switch_send[matrix_changed].state = (matrix_debouncing[i
+              ble_switch_send[0].dat[0]=0xff;
+              ble_switch_send[0].dat[1]=((int)sync) % 0xff; // synchronizing packet
+              ble_switch_send[matrix_changed+1].timing = timing;
+              ble_switch_send[matrix_changed+1].state = (matrix_debouncing[i
                   + matrix_offset] >> j) & 1;
-              ble_switch_send[matrix_changed].row = i;
-              ble_switch_send[matrix_changed].col = j;
+              ble_switch_send[matrix_changed+1].row = i;
+              ble_switch_send[matrix_changed+1].col = j;
               matrix_changed++;
             }
           }
         }
-        matrix[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
+        matrix_dummy[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
       }
     }
   }
+
+#if defined(NRF_SEPARATE_KEYBOARD_MASTER)
+  for (int i=0; i<matrix_changed; i++) {
+    push_queue(&delay_keys_queue, ble_switch_send[i+1]);
+  }
+#endif
 
 /* Power consumption test*/
 //  static int cnt1, cnt2;
@@ -188,26 +242,57 @@ uint8_t matrix_scan(void)
 #ifdef NRF_SEPARATE_KEYBOARD_SLAVE
   if (matrix_changed) {
     NRF_LOG_DEBUG("NUS send");
-    ble_nus_send_bytes((uint8_t*) ble_switch_send, matrix_changed*sizeof(ble_switch_state_t));
+    ble_nus_send_bytes((uint8_t*) ble_switch_send, (matrix_changed+1)*sizeof(ble_switch_state_t));
+    send_flag = true;
   }
 #else
   UNUSED_VARIABLE(ble_switch_send);
 #endif
 
   timing++;
+  if(timing==0xFF) timing=0;
 
   // Process received keys
   ble_switch_state_t rcv_key;
-  uint8_t process = 0;
-  if (rcv_keys_queue.cnt) {
-    process = rcv_keys_queue.received_keys[rcv_keys_queue.ridx].timing;
-    while(rcv_keys_queue.cnt) {
-      rcv_key = rcv_keys_queue.received_keys[rcv_keys_queue.ridx];
-      if (process == rcv_key.timing) {
-        set_received_key(rcv_key);
-        rcv_keys_queue.ridx++;
-        rcv_keys_queue.ridx %= QUEUE_LEN;
-        rcv_keys_queue.cnt--;
+  uint8_t slave_time_stamp = 0;
+  uint8_t master_time_stamp = 0;
+  static uint8_t dowel_count;
+  static ble_switch_state_t dowel_state;
+
+  // count delay of master inputs
+  rcv_key = front_queue(&delay_keys_queue);
+  if (
+      dowel_state.dat[0] == rcv_key.dat[0] &&
+      dowel_state.dat[1] == rcv_key.dat[1]
+      ) {
+    dowel_count++;
+  } else {
+    dowel_count = 0;
+  }
+  dowel_state = rcv_key;
+
+  slave_time_stamp = rcv_keys_queue.cnt ? front_queue(&rcv_keys_queue).timing : 0xFF;
+  master_time_stamp = delay_keys_queue.cnt ? front_queue(&delay_keys_queue).timing : 0xFF;
+  // master key inputs are proceeded after constant delay or newer slave inputs come.
+  if ((dowel_count == BURST_THRESHOLD) || (rcv_keys_queue.cnt &&
+      ((master_time_stamp < slave_time_stamp) ))) {
+    while (delay_keys_queue.cnt) {
+      rcv_key = front_queue(&delay_keys_queue);
+      if (master_time_stamp == rcv_key.timing) {
+        set_received_key(rcv_key, false);
+        pop_queue(&delay_keys_queue, &rcv_key);
+      } else {
+        break;
+      }
+    }
+  }
+  // slave key inputs are proceeded if they are older
+  if (master_time_stamp >= slave_time_stamp) {
+    while (rcv_keys_queue.cnt) {
+      rcv_key = front_queue(&rcv_keys_queue);
+      if (slave_time_stamp == rcv_key.timing) {
+        set_received_key(rcv_key, true);
+        pop_queue(&rcv_keys_queue, &rcv_key);
       } else {
         break;
       }
@@ -289,9 +374,16 @@ void ble_nus_on_disconnect() {
 }
 
 void ble_nus_packetrcv_handler(ble_switch_state_t* buf, uint8_t len) {
-  for (int i=0; i<len; i++) {
-    rcv_keys_queue.received_keys[rcv_keys_queue.widx++] = buf[i];
-    rcv_keys_queue.widx %= QUEUE_LEN;
-    rcv_keys_queue.cnt++;
+  static uint8_t prev_recv_timing;
+  int i=0;
+  if (buf[0].dat[0]==0xFF) {
+    // master and slave synchronizing
+    NRF_LOG_DEBUG("%d %d %d %d",timing, buf[0].dat[1], prev_recv_timing, ((int32_t)timing+buf[0].dat[1]-prev_recv_timing) % 0xFF);
+    timing=((int32_t)timing+buf[0].dat[1]-prev_recv_timing) % 0xFF;
+    prev_recv_timing = timing;
+    i=1;
+  }
+  for (; i<len; i++) {
+    push_queue(&rcv_keys_queue, buf[i]);
   }
 }

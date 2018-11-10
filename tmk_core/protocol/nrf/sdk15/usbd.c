@@ -273,7 +273,7 @@ static uint8_t tx_buf[USB_SERIAL_TX_QUEUE_SIZE], rx_buf[USB_SERIAL_RX_QUEUE_SIZE
 struct_queue tx_queue={tx_buf, 0, 0, 0, USB_SERIAL_TX_QUEUE_SIZE},
     rx_queue={rx_buf, 0, 0, 0, USB_SERIAL_RX_QUEUE_SIZE};
 
-size_t push_queue(struct_queue *q, uint8_t dat) {
+static size_t push_queue(struct_queue *q, uint8_t dat) {
   if (q->cnt < q->len) {
     q->buf[q->widx++] = dat;
     q->widx %= q->len;
@@ -284,7 +284,7 @@ size_t push_queue(struct_queue *q, uint8_t dat) {
   }
 }
 
-size_t pop_queue(struct_queue *q, uint8_t *dat) {
+static size_t pop_queue(struct_queue *q, uint8_t *dat) {
   if (q->cnt) {
     *dat = q->buf[q->ridx++];
     q->ridx %= q->len;
@@ -422,7 +422,7 @@ void cdc_acm_putc(char c) {
 }
 
 char cdc_acm_getc() {
-  uint8_t dat;
+  uint8_t dat=0;
   pop_queue(&rx_queue, &dat);
   return (char)dat;
 }

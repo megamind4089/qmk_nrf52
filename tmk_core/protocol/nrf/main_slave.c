@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "rgblight.h"
 #endif
 
-#define MAINTASK_INTERVAL 17
+const uint8_t MAINTASK_INTERVAL=17;
 
 void sendchar_pf(void *p, char c){
   UNUSED_VARIABLE(p);

@@ -4,11 +4,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct {
-  uint8_t timing : 8;
-  uint8_t state : 1;
-  uint8_t row :3;
-  uint8_t col : 4;
+typedef union {
+  struct {
+    uint8_t timing :8;
+    uint8_t state :1;
+    uint8_t row :3;
+    uint8_t col :4;
+  };
+  uint8_t dat[2];
 } ble_switch_state_t;
 
 _Static_assert(sizeof(ble_switch_state_t) == 2,
