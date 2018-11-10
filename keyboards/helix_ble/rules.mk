@@ -1,5 +1,5 @@
 
-DEFAULT_FOLDER = nrf52_separate_test/master
+DEFAULT_FOLDER = helix_ble/master
 
 NRF_DEBUG = no
 
