@@ -262,13 +262,14 @@ uint8_t matrix_scan(void)
   uint8_t master_time_stamp = 0;
   static uint8_t dowel_count;
 
+  slave_time_stamp = rcv_keys_queue.cnt ? front_queue(&rcv_keys_queue).timing : 0xFF;
+  master_time_stamp = delay_keys_queue.cnt ? front_queue(&delay_keys_queue).timing : 0xFF;
+
   // count delay of master inputs
   dowel_count = timing - front_queue(&delay_keys_queue).timing;
 
-  slave_time_stamp = rcv_keys_queue.cnt ? front_queue(&rcv_keys_queue).timing : 0xFF;
-  master_time_stamp = delay_keys_queue.cnt ? front_queue(&delay_keys_queue).timing : 0xFF;
   // master key inputs are proceeded after constant delay or newer slave inputs come.
-  if ((dowel_count >= BURST_THRESHOLD) || (rcv_keys_queue.cnt &&
+  if ((master_time_stamp != 0xFF && dowel_count >= BURST_THRESHOLD) || (rcv_keys_queue.cnt &&
       ((master_time_stamp < slave_time_stamp) ))) {
     while (delay_keys_queue.cnt) {
       rcv_key = front_queue(&delay_keys_queue);
