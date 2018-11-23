@@ -36,6 +36,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "app_ble_func.h"
 
+#ifndef THIS_DEVICE_ROWS
+ #include "pin_assign.h"
+#endif
+
 #include <stdbool.h>
 const uint32_t row_pins[THIS_DEVICE_ROWS] = MATRIX_ROW_PINS;
 const uint32_t col_pins[THIS_DEVICE_COLS] = MATRIX_COL_PINS;
@@ -257,24 +261,14 @@ uint8_t matrix_scan(void)
   uint8_t slave_time_stamp = 0;
   uint8_t master_time_stamp = 0;
   static uint8_t dowel_count;
-  static ble_switch_state_t dowel_state;
 
   // count delay of master inputs
-  rcv_key = front_queue(&delay_keys_queue);
-  if (
-      dowel_state.dat[0] == rcv_key.dat[0] &&
-      dowel_state.dat[1] == rcv_key.dat[1]
-      ) {
-    dowel_count++;
-  } else {
-    dowel_count = 0;
-  }
-  dowel_state = rcv_key;
+  dowel_count = timing - front_queue(&delay_keys_queue).timing;
 
   slave_time_stamp = rcv_keys_queue.cnt ? front_queue(&rcv_keys_queue).timing : 0xFF;
   master_time_stamp = delay_keys_queue.cnt ? front_queue(&delay_keys_queue).timing : 0xFF;
   // master key inputs are proceeded after constant delay or newer slave inputs come.
-  if ((dowel_count == BURST_THRESHOLD) || (rcv_keys_queue.cnt &&
+  if ((dowel_count >= BURST_THRESHOLD) || (rcv_keys_queue.cnt &&
       ((master_time_stamp < slave_time_stamp) ))) {
     while (delay_keys_queue.cnt) {
       rcv_key = front_queue(&delay_keys_queue);

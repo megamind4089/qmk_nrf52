@@ -9,6 +9,10 @@
 #include "app_ble_func.h"
 #include "usbd.h"
 
+#ifndef THIS_DEVICE_ROWS
+#include "pin_assign.h"
+#endif
+
 
 
 /**@brief Function for placing the application in low power state while waiting for events.

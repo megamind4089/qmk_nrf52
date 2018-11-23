@@ -111,13 +111,13 @@
 #ifndef BLE_HID_SLAVE_LATENCY
   #define BLE_HID_SLAVE_LATENCY 4
 #endif
-#ifndef BLE_HID_TIMEOUT
-  #define BLE_HID_TIMEOUT 1000
-#endif
+//#ifndef BLE_HID_TIMEOUT
+//  #define BLE_HID_TIMEOUT 1000
+//#endif
 #define MIN_CONN_INTERVAL                   MSEC_TO_UNITS(30, UNIT_1_25_MS)           /**< Minimum connection interval (7.5 ms) */
 #define MAX_CONN_INTERVAL                   MSEC_TO_UNITS(BLE_HID_MAX_INTERVAL, UNIT_1_25_MS)            /**< Maximum connection interval (30 ms). */
 #define SLAVE_LATENCY                       BLE_HID_SLAVE_LATENCY                                          /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                    MSEC_TO_UNITS(BLE_HID_TIMEOUT, UNIT_10_MS)             /**< Connection supervisory timeout (430 ms). */
+#define CONN_SUP_TIMEOUT                    MSEC_TO_UNITS((SLAVE_LATENCY+2)*BLE_HID_MAX_INTERVAL*2, UNIT_10_MS)             /**< Connection supervisory timeout (430 ms). */
 // TIMEOUT > (LATENCY+1)*MAX_INTERVAL*2
 
 #define FIRST_CONN_PARAMS_UPDATE_DELAY      APP_TIMER_TICKS(5000)                      /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
