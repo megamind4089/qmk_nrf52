@@ -119,36 +119,36 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * ,-----------------------------------------------------------------------------------.
  * |      |   !  |   @  |   #  |   $  |   %  |   ^  |   &  |   *  |   (  |   )  | Del  |
  * |------+------+------+------+------+-------------+------+------+------+------+------|
- * |      | Vol- | Vol+ | Mute | MBTN1|   \  |   `  |   -  |   =  |   [  |   ]  | PGup |
+ * |      | Vol- | Vol+ | Mute |      |   \  |   `  |   -  |   =  |   [  |   ]  | PGup |
  * |------+------+------+------+------+------|------+------+------+------+------+------|
- * |      | Prev | Next | Play | MBTN2|   |  |   ~  |   _  |   +  |   {  |   }  | PGdn |
+ * |      | Prev | Next | Play |      |   |  |   ~  |   _  |   +  |   {  |   }  | PGdn |
  * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      |      |      |      |      |      |      |  MR  |  MD  |  MU  |  MR  |
+ * |      |      |      |      |      |      |      |      |      |      |   U  |      |
  * `-----------------------------------------------------------------------------------'
  */
 [_RAISE] = LAYOUT( \
   _______, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, KC_DEL,  \
-  _______, MY_VOLD, MY_VOLU, KC_MUTE, KC_MS_BTN1, KC_BSLS, KC_GRV,  KC_MINS, KC_EQL,  KC_LBRC ,KC_RBRC, KC_PGUP, \
-  _______, KC_MRWD, KC_MFFD, KC_MPLY, KC_MS_BTN2, KC_PIPE, KC_TILD, KC_UNDS, KC_PLUS, KC_LCBR, KC_RCBR, KC_PGDOWN, \
-  _______, _______, _______, _______, XXXXXXX, _______, _______, _______, KC_MS_L, KC_MS_D, KC_MS_U, KC_MS_R \
+  _______, MY_VOLD, MY_VOLU, KC_MUTE, XXXXXXX, KC_BSLS, KC_GRV,  KC_MINS, KC_EQL,  KC_LBRC ,KC_RBRC, KC_PGUP, \
+  _______, KC_MRWD, KC_MFFD, KC_MPLY, XXXXXXX, KC_PIPE, KC_TILD, KC_UNDS, KC_PLUS, KC_LCBR, KC_RCBR, KC_PGDOWN, \
+  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______ \
 ),
 
 /* Adjust
  * ,-----------------------------------------------------------------------------------.
- * |      |Reset |      |      |      |TglLow|TglRis|      |      |      |      |      |
+ * |      |Reset |EntDFU|      |      |DSleep|      |      |      |      |      |      |
  * |------+------+------+------+------+-------------+------+------+------+------+------|
- * |Power |      |      |Aud on|Audoff|      |      | DFLT |      |      |      |      |
+ *  |BLE_E|      |      |      |      |      |      |      |      |      |      |      |
  * |------+------+------+------+------+------|------+------+------+------+------+------|
- * |      |Voice-|Voice+|Mus on|Musoff|      |      |BLtogg| BL - | BL + |BLstep|      |
+ * | BLE_D|      | DEL_0| DEL_1| DEL_2|DBNDS |      |BLtogg| BL - | BL + |BLstep|      |
  * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      | ADWOL|BLEdis|BLEen |      |      |      |      |      |      |      |
+ * | AD_WL|      | AD_0 | AD_1 | AD_2 |BT_LV |      |      |      |      |      |      |
  * `-----------------------------------------------------------------------------------'
  */
 [_ADJUST] =  LAYOUT( \
-  XXXXXXX, RESET,   XXXXXXX, XXXXXXX, TGL_LOW, TGL_RIS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-  KC_POWER,XXXXXXX, MU_MOD,  AU_ON,   AU_OFF,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-  XXXXXXX, MUV_DE,  MUV_IN,  MU_ON,   MU_OFF,  XXXXXXX, XXXXXXX, BL_TOGG, BL_DEC,  BL_INC,  BL_STEP, XXXXXXX, \
-  _______, _______, AD_WO_L, BLE_DIS, BLE_EN, _______, _______, _______, _______, _______, _______, _______  \
+  XXXXXXX, RESET,   ENT_DFU, XXXXXXX, XXXXXXX, ENT_SLP, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+  BLE_EN , XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+  BLE_DIS, XXXXXXX, DEL_ID0, DEL_ID1, DEL_ID2, DELBNDS, XXXXXXX, BL_TOGG, BL_DEC,  BL_INC,  BL_STEP, XXXXXXX, \
+  AD_WO_L, _______, ADV_ID0, ADV_ID1, ADV_ID2, BATT_LV, _______, _______, _______, _______, _______, _______ \
 )
 
 
@@ -186,133 +186,6 @@ void update_tri_layer_RGB(uint8_t layer1, uint8_t layer2, uint8_t layer3) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   char str[16];
-  switch (keycode) {
-//    case QWERTY:
-//      if (record->event.pressed) {
-//        #ifdef AUDIO_ENABLE
-//          PLAY_SONG(tone_qwerty);
-//        #endif
-//        persistent_default_layer_set(1UL<<_QWERTY);
-//      }
-//      return false;
-//      break;
-//    case COLEMAK:
-//      if (record->event.pressed) {
-//        #ifdef AUDIO_ENABLE
-//          PLAY_SONG(tone_colemak);
-//        #endif
-//        persistent_default_layer_set(1UL<<_COLEMAK);
-//      }
-//      return false;
-//      break;
-//    case DVORAK:
-//      if (record->event.pressed) {
-//        #ifdef AUDIO_ENABLE
-//          PLAY_SONG(tone_dvorak);
-//        #endif
-//        persistent_default_layer_set(1UL<<_DVORAK);
-//      }
-//      return false;
-//      break;
-//    case LOWER:
-//      if (record->event.pressed) {
-//          //not sure how to have keyboard check mode and set it to a variable, so my work around
-//          //uses another variable that would be set to true after the first time a reactive key is pressed.
-//        if (TOG_STATUS) { //TOG_STATUS checks is another reactive key currently pressed, only changes RGB mode if returns false
-//        } else {
-//          TOG_STATUS = !TOG_STATUS;
-//          #ifdef RGBLIGHT_ENABLE
-//            //rgblight_mode(16);
-//          #endif
-//        }
-//        layer_on(_LOWER);
-//        update_tri_layer_RGB(_LOWER, _RAISE, _ADJUST);
-//      } else {
-//        #ifdef RGBLIGHT_ENABLE
-//          //rgblight_mode(RGB_current_mode);   // revert RGB to initial mode prior to RGB mode change
-//        #endif
-//        TOG_STATUS = false;
-//        layer_off(_LOWER);
-//        update_tri_layer_RGB(_LOWER, _RAISE, _ADJUST);
-//      }
-//      return false;
-//      break;
-//    case RAISE:
-//      if (record->event.pressed) {
-//        //not sure how to have keyboard check mode and set it to a variable, so my work around
-//        //uses another variable that would be set to true after the first time a reactive key is pressed.
-//        if (TOG_STATUS) { //TOG_STATUS checks is another reactive key currently pressed, only changes RGB mode if returns false
-//        } else {
-//          TOG_STATUS = !TOG_STATUS;
-//          #ifdef RGBLIGHT_ENABLE
-//            //rgblight_mode(15);
-//          #endif
-//        }
-//        layer_on(_RAISE);
-//        update_tri_layer_RGB(_LOWER, _RAISE, _ADJUST);
-//      } else {
-//        #ifdef RGBLIGHT_ENABLE
-//          //rgblight_mode(RGB_current_mode);  // revert RGB to initial mode prior to RGB mode change
-//        #endif
-//        layer_off(_RAISE);
-//        TOG_STATUS = false;
-//        update_tri_layer_RGB(_LOWER, _RAISE, _ADJUST);
-//      }
-//      return false;
-//      break;
-//    case ADJUST:
-//        if (record->event.pressed) {
-//          layer_on(_ADJUST);
-//        } else {
-//          layer_off(_ADJUST);
-//        }
-//        return false;
-//        break;
-      //led operations - RGB mode change now updates the RGB_current_mode to allow the right RGB mode to be set after reactive keys are released
-    case RGB_MOD:
-      #ifdef RGBLIGHT_ENABLE
-        if (record->event.pressed) {
-          rgblight_mode(RGB_current_mode);
-          rgblight_step();
-          RGB_current_mode = rgblight_config.mode;
-        }
-      #endif
-      return false;
-      break;
-    case EISU:
-      if (record->event.pressed) {
-        if(keymap_config.swap_lalt_lgui==false){
-          register_code(KC_LANG2);
-        }else{
-          SEND_STRING(SS_LALT("`"));
-        }
-      } else {
-        unregister_code(KC_LANG2);
-      }
-      return false;
-      break;
-    case KANA:
-      if (record->event.pressed) {
-        if(keymap_config.swap_lalt_lgui==false){
-          register_code(KC_LANG1);
-        }else{
-          SEND_STRING(SS_LALT("`"));
-        }
-      } else {
-        unregister_code(KC_LANG1);
-      }
-      return false;
-      break;
-    case RGBRST:
-      #ifdef RGBLIGHT_ENABLE
-        if (record->event.pressed) {
-          eeconfig_update_rgblight_default();
-          rgblight_enable();
-          RGB_current_mode = rgblight_config.mode;
-        }
-      #endif
-      break;
-  }
   if (record->event.pressed) {
     switch (keycode) {
     case DELBNDS:
