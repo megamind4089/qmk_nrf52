@@ -155,14 +155,12 @@ void matrix_init(void) {
 }
 
 static inline void set_received_key(ble_switch_state_t key, bool from_slave) {
-#if defined(NRF_SEPARATE_KEYBOARD_MASTER) || defined(NRF_SEPARATE_KEYBOARD_SLAVE)
   const uint8_t matrix_offset = (isLeftHand&&from_slave) ? THIS_DEVICE_ROWS : 0;
   if (key.state) {
     matrix[key.row + matrix_offset] |= (1 << key.col);
   } else {
     matrix[key.row + matrix_offset] &= ~(1 << key.col);
   }
-#endif
 }
 
 
@@ -205,7 +203,11 @@ uint8_t matrix_scan(void)
             }
           }
         }
+#if defined(NRF_SEPARATE_KEYBOARD_MASTER) || defined(NRF_SEPARATE_KEYBOARD_SLAVE)
         matrix_dummy[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
+#else
+        matrix[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
+#endif
       }
     }
   }
