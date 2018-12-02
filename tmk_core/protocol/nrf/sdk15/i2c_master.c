@@ -6,18 +6,28 @@
 
 static const nrfx_twi_t m_twi_master = NRFX_TWI_INSTANCE(0);
 
-void i2c_init(void)
+#ifndef CONFIG_PIN_SCL
+#define CONFIG_PIN_SCL 16
+#endif
+#ifndef CONFIG_PIN_SDA
+#define CONFIG_PIN_SDA 18
+#endif
+
+int i2c_init(void)
 {
   const nrfx_twi_config_t config =
   {
-     .scl                = 16,
-     .sda                = 18,
-     .frequency          = NRF_TWI_FREQ_400K,
+//     .scl                = 16,
+//     .sda                = 18,
+     .scl                = CONFIG_PIN_SCL, // 18,
+     .sda                = CONFIG_PIN_SDA, // 16,
+     .frequency          = NRF_TWI_FREQ_100K,
      .interrupt_priority = APP_IRQ_PRIORITY_LOW,
      .hold_bus_uninit     = false
   };
-  nrfx_twi_init(&m_twi_master, &config, NULL, NULL); // Initialize as blocking mode
+  int ret = nrfx_twi_init(&m_twi_master, &config, NULL, NULL); // Initialize as blocking mode
   nrfx_twi_enable(&m_twi_master);
+  return ret;
 }
 
 void i2c_uninit(void) {
@@ -37,4 +47,11 @@ uint8_t i2c_receive(uint8_t address, uint8_t* data, uint16_t length)
 uint8_t i2c_readReg(uint8_t devaddr, uint8_t regaddr, uint8_t* data, uint16_t length, uint16_t timeout) {
   nrfx_twi_tx(&m_twi_master, devaddr, &regaddr, 1, true);
   return nrfx_twi_rx(&m_twi_master, devaddr, data, length);
+}
+
+uint8_t i2c_writeReg(uint8_t devaddr, uint8_t regaddr, uint8_t* data, uint16_t length, uint16_t timeout) {
+  static uint8_t buffer[256];
+  buffer[0] = regaddr;
+  memcpy(&buffer[1], data, length);
+  return nrfx_twi_tx(&m_twi_master, devaddr, buffer, length+1, false);
 }
