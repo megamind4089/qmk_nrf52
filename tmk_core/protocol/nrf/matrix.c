@@ -36,6 +36,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "app_ble_func.h"
 
+#ifdef USE_I2C
+#include "i2c_master.h"
+#endif
+
 #ifndef THIS_DEVICE_ROWS
  #include "pin_assign.h"
 #endif
@@ -151,6 +155,9 @@ void matrix_init(void) {
     matrix_debouncing[i] = 0;
   }
 
+#ifdef USE_I2C
+  i2c_init();
+#endif
   matrix_init_user();
 }
 
@@ -216,6 +223,36 @@ uint8_t matrix_scan(void)
   for (int i=0; i<matrix_changed; i++) {
     push_queue(&delay_keys_queue, ble_switch_send[i+1]);
   }
+
+#ifdef USE_I2C
+#if MATRIX_COLS>8
+#error "MATRIX_COLS should be less than eight for I2C "
+#endif
+  uint8_t slave_offset = isLeftHand ? THIS_DEVICE_ROWS : 0;
+  uint8_t slave_matrix_changed = 0;
+  uint8_t i2c_dat[MATRIX_ROWS];
+  i2c_readReg(SLAVE_I2C_ADDRESS, 0, i2c_dat, MATRIX_ROWS - THIS_DEVICE_ROWS, 0);
+  for (uint8_t i = 0; i < MATRIX_ROWS - THIS_DEVICE_ROWS; i++) {
+    if (matrix_dummy[i + slave_offset] != i2c_dat[i]) {
+      for (uint8_t j = 0; j < MATRIX_COLS; j++) {
+        if ((matrix_dummy[i + slave_offset] ^ i2c_dat[i]) & (1 << j)) {
+          ble_switch_send[0].dat[0] = 0xff;
+          ble_switch_send[0].dat[1] = ((int) sync) % 0xff; // synchronizing packet
+          ble_switch_send[slave_matrix_changed + 1].timing = timing;
+          ble_switch_send[slave_matrix_changed + 1].state = (i2c_dat[i] >> j) & 1;
+          ble_switch_send[slave_matrix_changed + 1].row = i;
+          ble_switch_send[slave_matrix_changed + 1].col = j;
+          slave_matrix_changed++;
+        }
+      }
+    }
+    matrix_dummy[i + slave_offset] = i2c_dat[i];
+  }
+  for (int i=0; i<slave_matrix_changed; i++) {
+    push_queue(&rcv_keys_queue, ble_switch_send[i+1]);
+  }
+#endif
+
 #endif
 
 /* Power consumption test*/

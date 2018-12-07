@@ -21,7 +21,7 @@ int i2c_init(void)
 //     .sda                = 18,
      .scl                = CONFIG_PIN_SCL, // 18,
      .sda                = CONFIG_PIN_SDA, // 16,
-     .frequency          = NRF_TWI_FREQ_100K,
+     .frequency          = NRF_TWI_FREQ_400K,
      .interrupt_priority = APP_IRQ_PRIORITY_LOW,
      .hold_bus_uninit     = false
   };
