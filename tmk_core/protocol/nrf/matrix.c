@@ -170,11 +170,8 @@ static inline void set_received_key(ble_switch_state_t key, bool from_slave) {
   }
 }
 
-
-char str[16];
-uint8_t matrix_scan(void)
-{
-
+__attribute__ ((weak))
+uint8_t matrix_scan_impl(uint8_t* _matrix){
   uint8_t matrix_offset = isLeftHand ? 0 : MATRIX_ROWS-THIS_DEVICE_ROWS;
   volatile int matrix_changed = 0;
   ble_switch_state_t ble_switch_send[THIS_DEVICE_ROWS*THIS_DEVICE_COLS];
@@ -231,6 +228,7 @@ uint8_t matrix_scan(void)
   uint8_t slave_offset = isLeftHand ? THIS_DEVICE_ROWS : 0;
   uint8_t slave_matrix_changed = 0;
   uint8_t i2c_dat[MATRIX_ROWS];
+  memset(i2c_dat, 0, sizeof(i2c_dat));
   i2c_readReg(SLAVE_I2C_ADDRESS, 0, i2c_dat, MATRIX_ROWS - THIS_DEVICE_ROWS, 0);
   for (uint8_t i = 0; i < MATRIX_ROWS - THIS_DEVICE_ROWS; i++) {
     if (matrix_dummy[i + slave_offset] != i2c_dat[i]) {
@@ -332,10 +330,15 @@ uint8_t matrix_scan(void)
       }
     }
   }
-
-  matrix_scan_user();
-
   return 1;
+}
+
+char str[16];
+uint8_t matrix_scan(void)
+{
+  uint8_t res = matrix_scan_impl(matrix);
+  matrix_scan_user();
+  return res;
 }
 
 inline
