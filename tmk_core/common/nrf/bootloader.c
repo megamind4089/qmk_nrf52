@@ -8,7 +8,8 @@ void bootloader_jump(void) {
   sd_power_gpregret_set(0, 1);
   NVIC_SystemReset();
 #elif NRF_SDK_MAJOR_VER==12
- //#warning "Bootloader jump for sdk12 is not implemented."
+  NRF_POWER->GPREGRET |= 1;
+  NVIC_SystemReset();
 #else
 #error "Invalid nRF_SDK version."
 #endif

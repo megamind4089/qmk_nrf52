@@ -60,9 +60,26 @@
 #define SCAN_WINDOW                 0x0050                                        /**< Determines scan window in units of 0.625 millisecond. */
 #define SCAN_TIMEOUT                0
 
-#define MIN_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(20.5, UNIT_1_25_MS)   /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(75, UNIT_1_25_MS)    /**< Determines maximum connection interval in milliseconds. */
-#define SUPERVISION_TIMEOUT         (uint16_t) MSEC_TO_UNITS(4000, UNIT_10_MS)    /**< Determines supervision time-out in units of 10 milliseconds. */
+#ifndef BLE_NUS_MIN_INTERVAL
+  #define BLE_NUS_MIN_INTERVAL 60
+#endif
+#ifndef BLE_NUS_MAX_INTERVAL
+  #define BLE_NUS_MAX_INTERVAL 75
+#endif
+#if BLE_NUS_MIN_INTERVAL > BLE_NUS_MAX_INTERVAL
+#error "MIN_INTERVAL should be larger than MAX_INTERVAL"
+#endif
+#ifndef BLE_NUS_SLAVE_LATENCY
+  #define BLE_NUS_SLAVE_LATENCY 8
+#endif
+#ifndef BLE_NUS_TIMEOUT
+  #define BLE_NUS_TIMEOUT 1500
+#endif
+
+#define MIN_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(BLE_NUS_MIN_INTERVAL, UNIT_1_25_MS)   /**< Determines minimum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(BLE_NUS_MAX_INTERVAL, UNIT_1_25_MS)    /**< Determines maximum connection interval in milliseconds. */
+#define SLAVE_LATENCY               BLE_NUS_SLAVE_LATENCY
+#define SUPERVISION_TIMEOUT         (uint16_t) MSEC_TO_UNITS(BLE_NUS_TIMEOUT, UNIT_10_MS)    /**< Determines supervision time-out in units of 10 milliseconds. */
 
 /**@brief names which the central applications will scan for, and which will be advertised by the peripherals.
  *  if these are set to empty strings, the UUIDs defined below will be used
@@ -89,7 +106,7 @@ static ble_gap_scan_params_t m_scan_params =
 };
 
 // Whitelist buffers.
-static bool m_whitelist_disabled;
+//static bool m_whitelist_disabled;
 static ble_gap_addr_t whitelist_addrs[8];
 static ble_gap_irk_t whitelist_irks[8];
 static ble_gap_addr_t *p_whitelist_addrs = whitelist_addrs;
@@ -128,11 +145,11 @@ static const ble_gap_conn_params_t m_connection_param =
 /**
  * @brief NUS uuid
  */
-static const ble_uuid_t m_nus_uuid =
-  {
-    .uuid = BLE_UUID_NUS_SERVICE,
-    .type = BLE_UUID_TYPE_VENDOR_BEGIN
-  };
+//static const ble_uuid_t m_nus_uuid =
+//  {
+//    .uuid = BLE_UUID_NUS_SERVICE,
+//    .type = BLE_UUID_TYPE_VENDOR_BEGIN
+//  };
 
 static ble_nus_c_t              m_ble_nus_c;                    /**< Instance of NUS service. Must be passed to all NUS_C API calls. */
 static uint16_t           m_conn_handle_nus_c            = BLE_CONN_HANDLE_INVALID;       /**< Connection handle for the NUS central application */
@@ -209,6 +226,8 @@ void scan_start(void)
 
 //        uint32_t addr_cnt = (sizeof(whitelist_addrs) / sizeof(ble_gap_addr_t));
 //        uint32_t irk_cnt = (sizeof(whitelist_irks) / sizeof(ble_gap_irk_t));
+        whitelist.addr_count = (sizeof(whitelist_addrs) / sizeof(ble_gap_addr_t));
+        whitelist.irk_count = (sizeof(whitelist_irks) / sizeof(ble_gap_irk_t));
 
         // Reload the whitelist and whitelist all peers.
         //    whitelist_load();
@@ -221,7 +240,7 @@ void scan_start(void)
         m_scan_params.interval = SCAN_INTERVAL;
         m_scan_params.window = SCAN_WINDOW;
 
-        if (((whitelist.addr_count == 0) && (whitelist.irk_count == 0)) || (m_whitelist_disabled)) {
+        if (((whitelist.addr_count == 0) && (whitelist.irk_count == 0))) {
           // Don't use whitelist.
           m_scan_params.timeout = SCAN_TIMEOUT;
 #if (NRF_SD_BLE_API_VERSION == 2)
@@ -368,79 +387,79 @@ static bool find_adv_name(const ble_gap_evt_adv_report_t *p_adv_report, const ch
  *
  * @retval      true if the UUID is present in the advertisement report. Otherwise false
  */
-static bool is_uuid_present(const ble_uuid_t *p_target_uuid,
-                            const ble_gap_evt_adv_report_t *p_adv_report)
-{
-    uint32_t err_code;
-    uint32_t index = 0;
-    uint8_t *p_data = (uint8_t *)p_adv_report->data;
-    ble_uuid_t extracted_uuid;
-
-    while (index < p_adv_report->dlen)
-    {
-        uint8_t field_length = p_data[index];
-        uint8_t field_type   = p_data[index + 1];
-
-        if ( (field_type == BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_MORE_AVAILABLE)
-           || (field_type == BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE)
-           )
-        {
-            for (uint32_t u_index = 0; u_index < (field_length / UUID16_SIZE); u_index++)
-            {
-                err_code = sd_ble_uuid_decode(  UUID16_SIZE,
-                                                &p_data[u_index * UUID16_SIZE + index + 2],
-                                                &extracted_uuid);
-                if (err_code == NRF_SUCCESS)
-                {
-                    if ((extracted_uuid.uuid == p_target_uuid->uuid)
-                        && (extracted_uuid.type == p_target_uuid->type))
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        else if ( (field_type == BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_MORE_AVAILABLE)
-                || (field_type == BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_COMPLETE)
-                )
-        {
-            for (uint32_t u_index = 0; u_index < (field_length / UUID32_SIZE); u_index++)
-            {
-                err_code = sd_ble_uuid_decode(UUID16_SIZE,
-                &p_data[u_index * UUID32_SIZE + index + 2],
-                &extracted_uuid);
-                if (err_code == NRF_SUCCESS)
-                {
-                    if ((extracted_uuid.uuid == p_target_uuid->uuid)
-                        && (extracted_uuid.type == p_target_uuid->type))
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        else if ( (field_type == BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_MORE_AVAILABLE)
-                || (field_type == BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_COMPLETE)
-                )
-        {
-            err_code = sd_ble_uuid_decode(UUID128_SIZE,
-                                          &p_data[index + 2],
-                                          &extracted_uuid);
-            if (err_code == NRF_SUCCESS)
-            {
-                if ((extracted_uuid.uuid == p_target_uuid->uuid)
-                    && (extracted_uuid.type == p_target_uuid->type))
-                {
-                    return true;
-                }
-            }
-        }
-        index += field_length + 1;
-    }
-    return false;
-}
+//static bool is_uuid_present(const ble_uuid_t *p_target_uuid,
+//                            const ble_gap_evt_adv_report_t *p_adv_report)
+//{
+//    uint32_t err_code;
+//    uint32_t index = 0;
+//    uint8_t *p_data = (uint8_t *)p_adv_report->data;
+//    ble_uuid_t extracted_uuid;
+//
+//    while (index < p_adv_report->dlen)
+//    {
+//        uint8_t field_length = p_data[index];
+//        uint8_t field_type   = p_data[index + 1];
+//
+//        if ( (field_type == BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_MORE_AVAILABLE)
+//           || (field_type == BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE)
+//           )
+//        {
+//            for (uint32_t u_index = 0; u_index < (field_length / UUID16_SIZE); u_index++)
+//            {
+//                err_code = sd_ble_uuid_decode(  UUID16_SIZE,
+//                                                &p_data[u_index * UUID16_SIZE + index + 2],
+//                                                &extracted_uuid);
+//                if (err_code == NRF_SUCCESS)
+//                {
+//                    if ((extracted_uuid.uuid == p_target_uuid->uuid)
+//                        && (extracted_uuid.type == p_target_uuid->type))
+//                    {
+//                        return true;
+//                    }
+//                }
+//            }
+//        }
+//
+//        else if ( (field_type == BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_MORE_AVAILABLE)
+//                || (field_type == BLE_GAP_AD_TYPE_32BIT_SERVICE_UUID_COMPLETE)
+//                )
+//        {
+//            for (uint32_t u_index = 0; u_index < (field_length / UUID32_SIZE); u_index++)
+//            {
+//                err_code = sd_ble_uuid_decode(UUID16_SIZE,
+//                &p_data[u_index * UUID32_SIZE + index + 2],
+//                &extracted_uuid);
+//                if (err_code == NRF_SUCCESS)
+//                {
+//                    if ((extracted_uuid.uuid == p_target_uuid->uuid)
+//                        && (extracted_uuid.type == p_target_uuid->type))
+//                    {
+//                        return true;
+//                    }
+//                }
+//            }
+//        }
+//
+//        else if ( (field_type == BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_MORE_AVAILABLE)
+//                || (field_type == BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_COMPLETE)
+//                )
+//        {
+//            err_code = sd_ble_uuid_decode(UUID128_SIZE,
+//                                          &p_data[index + 2],
+//                                          &extracted_uuid);
+//            if (err_code == NRF_SUCCESS)
+//            {
+//                if ((extracted_uuid.uuid == p_target_uuid->uuid)
+//                    && (extracted_uuid.type == p_target_uuid->type))
+//                {
+//                    return true;
+//                }
+//            }
+//        }
+//        index += field_length + 1;
+//    }
+//    return false;
+//}
 
 
 /**@brief Function for handling BLE Stack events concerning central applications.
@@ -529,6 +548,7 @@ static void on_ble_central_conn_evt(const ble_evt_t * const p_ble_evt)
                 if (find_adv_name(&p_gap_evt->params.adv_report, m_target_periph_name))
                 {
                     // Initiate connection.
+                  m_scan_params.use_whitelist = 0;
                     err_code = sd_ble_gap_connect(&p_gap_evt->params.adv_report.peer_addr,
                                                   &m_scan_params,
                                                   &m_connection_param);
@@ -540,21 +560,21 @@ static void on_ble_central_conn_evt(const ble_evt_t * const p_ble_evt)
             }
             else
             {
-               /** We do not want to connect to two peripherals offering the same service, so when
-                *  a UUID is matched, we check that we are not already connected to a peer which
-                *  offers the same service. */
-                if (is_uuid_present(&m_nus_uuid, &p_gap_evt->params.adv_report)&&
-                     (m_conn_handle_nus_c == BLE_CONN_HANDLE_INVALID))
-                {
-                    // Initiate connection.
-                    err_code = sd_ble_gap_connect(&p_gap_evt->params.adv_report.peer_addr,
-                                                  &m_scan_params,
-                                                  &m_connection_param);
-                    if (err_code != NRF_SUCCESS)
-                    {
-                        NRF_LOG_INFO("Connection Request Failed, reason %d\r\n", err_code);
-                    }
-                }
+//               /** We do not want to connect to two peripherals offering the same service, so when
+//                *  a UUID is matched, we check that we are not already connected to a peer which
+//                *  offers the same service. */
+//                if (is_uuid_present(&m_nus_uuid, &p_gap_evt->params.adv_report)&&
+//                     (m_conn_handle_nus_c == BLE_CONN_HANDLE_INVALID))
+//                {
+//                    // Initiate connection.
+//                    err_code = sd_ble_gap_connect(&p_gap_evt->params.adv_report.peer_addr,
+//                                                  &m_scan_params,
+//                                                  &m_connection_param);
+//                    if (err_code != NRF_SUCCESS)
+//                    {
+//                        NRF_LOG_INFO("Connection Request Failed, reason %d\r\n", err_code);
+//                    }
+//                }
             }
         } break; // BLE_GAP_ADV_REPORT
 

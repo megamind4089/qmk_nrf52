@@ -4,12 +4,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define PIN_DUMMY 0xFF
+
 typedef union {
   struct {
     uint8_t timing :8;
     uint8_t state :1;
-    uint8_t row :3;
-    uint8_t col :4;
+    uint8_t id :7;
   };
   uint8_t dat[2];
 } ble_switch_state_t;

@@ -39,6 +39,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef USE_I2C
 #include "i2c_master.h"
 #endif
+#include "io_expander.h"
+matrix_row_t read_row_ioexpander (uint8_t row);
 
 #ifndef THIS_DEVICE_ROWS
  #include "pin_assign.h"
@@ -105,6 +107,7 @@ static void init_cols(void);
 void unselect_rows(void);
 void select_row(uint8_t row);
 matrix_row_t read_cols(void);
+matrix_row_t read_row(uint8_t row);
 
 __attribute__ ((weak))
 void matrix_init_user(void) {
@@ -163,28 +166,32 @@ void matrix_init(void) {
 
 static inline void set_received_key(ble_switch_state_t key, bool from_slave) {
   const uint8_t matrix_offset = (isLeftHand&&from_slave) ? THIS_DEVICE_ROWS : 0;
+
+  uint8_t row = key.id / MATRIX_COLS;
+  uint8_t col = key.id % MATRIX_COLS;
+
   if (key.state) {
-    matrix[key.row + matrix_offset] |= (1 << key.col);
+    matrix[row + matrix_offset] |= (1 << col);
   } else {
-    matrix[key.row + matrix_offset] &= ~(1 << key.col);
+    matrix[row + matrix_offset] &= ~(1 << col);
   }
 }
 
 __attribute__ ((weak))
-uint8_t matrix_scan_impl(uint8_t* _matrix){
+uint8_t matrix_scan_impl(matrix_row_t* _matrix){
   uint8_t matrix_offset = isLeftHand ? 0 : MATRIX_ROWS-THIS_DEVICE_ROWS;
   volatile int matrix_changed = 0;
   ble_switch_state_t ble_switch_send[THIS_DEVICE_ROWS*THIS_DEVICE_COLS];
 
   for (uint8_t i = 0; i < THIS_DEVICE_ROWS; i++) {
-    select_row(i);
-    wait_us(0);
-    matrix_row_t cols = read_cols();
-    if (matrix_debouncing[i + matrix_offset] != cols) {
-      matrix_debouncing[i + matrix_offset] = cols;
+//    select_row(i);
+//    wait_us(0);
+    matrix_row_t row = read_row(i);
+    if (matrix_debouncing[i + matrix_offset] != row) {
+      matrix_debouncing[i + matrix_offset] = row;
       debouncing = DEBOUNCE;
     }
-    unselect_rows();
+//    unselect_rows();
   }
 
   if (debouncing) {
@@ -201,8 +208,7 @@ uint8_t matrix_scan_impl(uint8_t* _matrix){
               ble_switch_send[matrix_changed+1].timing = timing;
               ble_switch_send[matrix_changed+1].state = (matrix_debouncing[i
                   + matrix_offset] >> j) & 1;
-              ble_switch_send[matrix_changed+1].row = i;
-              ble_switch_send[matrix_changed+1].col = j;
+              ble_switch_send[matrix_changed+1].id = i * MATRIX_COLS + j;
               matrix_changed++;
             }
           }
@@ -238,8 +244,7 @@ uint8_t matrix_scan_impl(uint8_t* _matrix){
           ble_switch_send[0].dat[1] = ((int) sync) % 0xff; // synchronizing packet
           ble_switch_send[slave_matrix_changed + 1].timing = timing;
           ble_switch_send[slave_matrix_changed + 1].state = (i2c_dat[i] >> j) & 1;
-          ble_switch_send[slave_matrix_changed + 1].row = i;
-          ble_switch_send[slave_matrix_changed + 1].col = j;
+          ble_switch_send[slave_matrix_changed + 1].id = i * MATRIX_COLS + j;
           slave_matrix_changed++;
         }
       }
@@ -384,6 +389,19 @@ matrix_row_t read_cols(void)
     row |= ((nrf_gpio_pin_read(col_pins[i]) ? 0 : 1) << i);
   }
   return row;
+}
+
+matrix_row_t read_row(uint8_t row)
+{
+#ifdef USE_I2C_IOEXPANDER
+  return read_row_ioexpander(row);
+#else
+  select_row(row);
+  wait_us(0);
+  matrix_row_t row_state = read_cols();
+  unselect_rows();
+  return row_state;
+#endif
 }
 
 /* Row pin configuration

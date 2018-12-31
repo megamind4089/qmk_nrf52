@@ -46,9 +46,15 @@ ifeq ($(NRF_DEBUG), yes)
   NRFCFLAGS += -DNRF_LOG_BACKEND_UART_ENABLED=1
   NRFCFLAGS += -DNRF_LOG_DEFAULT_LEVEL=4
 else
+  ifeq ($(MCU_SERIES),NRF52840)
   NRFCFLAGS += -DNRF_LOG_ENABLED=1
   NRFCFLAGS += -DNRF_LOG_BACKEND_UART_ENABLED=0
   NRFCFLAGS += -DNRF_LOG_DEFAULT_LEVEL=3
+  else
+  NRFCFLAGS += -DNRF_LOG_ENABLED=1
+	NRFCFLAGS += -DNRF_LOG_BACKEND_SERIAL_USES_UART=1
+  NRFCFLAGS += -DNRF_LOG_DEFAULT_LEVEL=0
+  endif
 endif
 
 COMMON_VPATH += $(DRIVER_PATH)/nrf52
@@ -78,6 +84,7 @@ ifeq ($(NRFSDK_VER), 12)
     $(NRFSDK_ROOT)/components/drivers_nrf/common/nrf_drv_common.c \
     $(NRFSDK_ROOT)/components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
     $(NRFSDK_ROOT)/components/drivers_nrf/uart/nrf_drv_uart.c \
+    $(NRFSDK_ROOT)/components/drivers_nrf/twi_master/nrf_drv_twi.c \
     $(NRFSDK_ROOT)/components/ble/common/ble_advdata.c \
     $(NRFSDK_ROOT)/components/ble/common/ble_conn_params.c \
     $(NRFSDK_ROOT)/components/ble/common/ble_conn_state.c \
@@ -205,6 +212,7 @@ ifeq ($(NRFSDK_VER), 12)
     $(NRFSDK_ROOT)/components/ble/ble_services/ble_rscs \
     $(NRFSDK_ROOT)/components/ble/ble_services/ble_nus_c \
     $(NRFSDK_ROOT)/components/ble/ble_db_discovery \
+    $(NRFSDK_ROOT)/components/ble/ble_radio_notification \
     $(NRFSDK_ROOT)/components/drivers_nrf/usbd \
     $(NRFSDK_ROOT)/components/softdevice/common/softdevice_handler \
     $(NRFSDK_ROOT)/components/ble/ble_services/ble_hrs \
@@ -426,7 +434,6 @@ NRFLIBSRC += \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twim.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twis.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
-  $(NRFSDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
   $(NRFSDK_ROOT)/external/segger_rtt/SEGGER_RTT.c \
   $(NRFSDK_ROOT)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
   $(NRFSDK_ROOT)/external/segger_rtt/SEGGER_RTT_printf.c \
@@ -452,6 +459,10 @@ NRFLIBSRC += \
   $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh.c \
   $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
   $(NRFSDK_ROOT)/components/libraries/queue/nrf_queue.c \
+
+ifeq ($(MCU_SERIES), NRF52840)
+NRFLIBSRC += \
+  $(NRFSDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
   $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/app_usbd_hid.c \
   $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/generic/app_usbd_hid_generic.c \
   $(NRFSDK_ROOT)/components/libraries/usbd/class/cdc/acm/app_usbd_cdc_acm.c \
@@ -466,6 +477,20 @@ NRFSRC +=  $(NRFSDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
   $(NRFSDK_ROOT)/components/ble/common/ble_conn_params.c \
   $(NRFSDK_ROOT)/components/ble/nrf_ble_gatt/nrf_ble_gatt.c \
+  
+endif
+
+ifeq ($(MCU_SERIES), NRF52832)
+NRFLIBSRC += \
+  $(NRFSDK_ROOT)/modules/nrfx/mdk/system_nrf52.c \
+
+NRFSRC +=  $(NRFSDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52.S \
+  $(NRFSDK_ROOT)/components/ble/peer_manager/security_dispatcher.c \
+  $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
+  $(NRFSDK_ROOT)/components/ble/common/ble_conn_params.c \
+  $(NRFSDK_ROOT)/components/ble/nrf_ble_gatt/nrf_ble_gatt.c \
+
+endif
 
 #  $(NRFSDK_ROOT)/components/libraries/bsp/bsp.c \
   $(NRFSDK_ROOT)/components/libraries/bsp/bsp_btn_ble.c \
@@ -506,7 +531,6 @@ EXTRAINCDIRS += \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/include \
   $(NRFSDK_ROOT)/components/libraries/experimental_task_manager \
   $(NRFSDK_ROOT)/components/ble/ble_services/ble_hrs_c \
-  $(NRFSDK_ROOT)/components/softdevice/s140/headers/nrf52 \
   $(NRFSDK_ROOT)/components/nfc/ndef/connection_handover/le_oob_rec \
   $(NRFSDK_ROOT)/components/libraries/queue \
   $(NRFSDK_ROOT)/components/libraries/pwr_mgmt \
@@ -553,7 +577,6 @@ EXTRAINCDIRS += \
   $(NRFSDK_ROOT)/components/libraries/hci \
   $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/kbd \
   $(NRFSDK_ROOT)/components/libraries/timer \
-  $(NRFSDK_ROOT)/components/softdevice/s140/headers \
   $(NRFSDK_ROOT)/integration/nrfx \
   $(NRFSDK_ROOT)/components/nfc/t4t_parser/tlv \
   $(NRFSDK_ROOT)/components/libraries/sortlist \
@@ -611,6 +634,19 @@ EXTRAINCDIRS += \
   $(NRFSDK_ROOT)/components/ble/ble_db_discovery \
   $(NRFSDK_ROOT)/components/ble/ble_radio_notification \
 
+ifeq ($(MCU_SERIES), NRF52840)
+EXTRAINCDIRS += \
+  $(NRFSDK_ROOT)/components/softdevice/s140/headers \
+  $(NRFSDK_ROOT)/components/softdevice/s140/headers/nrf52 \
+
+endif
+ifeq ($(MCU_SERIES), NRF52832)
+EXTRAINCDIRS += \
+  $(NRFSDK_ROOT)/components/softdevice/s132/headers \
+  $(NRFSDK_ROOT)/components/softdevice/s132/headers/nrf52 \
+
+endif
+
 NRFLIB := libnrf.sdk15.$(MCU_SERIES)
 
 ifeq ($(strip $(NRF_SEPARATE)), master)
@@ -641,9 +677,6 @@ endif
 #  NRFCFLAGS += -DCONFIG_GPIO_AS_PINRESET
   NRFCFLAGS += -DCONFIG_NFCT_PINS_AS_GPIOS
   NRFCFLAGS += -DFLOAT_ABI_HARD
-  NRFCFLAGS += -DNRF52840_XXAA
-  NRFCFLAGS += -DNRF_SD_BLE_API_VERSION=6
-  NRFCFLAGS += -DS140
   NRFCFLAGS += -DSOFTDEVICE_PRESENT
   NRFCFLAGS += -DSWI_DISABLE0
   NRFCFLAGS += -mcpu=cortex-m4
@@ -655,15 +688,52 @@ endif
   NRFCFLAGS += -fno-builtin -fshort-enums
   NRFCFLAGS += -Os
 
+ifeq ($(MCU_SERIES), NRF52840)
+  NRFCFLAGS += -DNRF52840_XXAA
+  NRFCFLAGS += -DNRF_SD_BLE_API_VERSION=6
+  NRFCFLAGS += -DS140
+  ASFLAGS += -DNRF52840_XXAA
+  ASFLAGS += -DNRF_SD_BLE_API_VERSION=6
+  ASFLAGS += -DS140
+endif
+ifeq ($(MCU_SERIES), NRF52832)
+  NRFCFLAGS += -DNRF52832_XXAA
+  NRFCFLAGS += -DNRF_SD_BLE_API_VERSION=3
+  NRFCFLAGS += -DS132
+  NRFCFLAGS += -DCONFIG_GPIO_AS_PINRESET
+	NRFCFLAGS += -DNRF52_PAN_7
+  NRFCFLAGS += -DNRF52_PAN_12
+  NRFCFLAGS += -DNRF52_PAN_58
+  NRFCFLAGS += -DNRF52_PAN_54
+  NRFCFLAGS += -DNRF52_PAN_31
+  NRFCFLAGS += -DNRF52_PAN_51
+  NRFCFLAGS += -DNRF52_PAN_36
+  NRFCFLAGS += -DNRF52_PAN_15
+  NRFCFLAGS += -DNRF52_PAN_20
+  NRFCFLAGS += -DNRF52_PAN_55
+  NRFCFLAGS += -DNRF52_PAN_644
+  ASFLAGS += -DNRF52832_XXAA
+  ASFLAGS += -DNRF_SD_BLE_API_VERSION=3
+  ASFLAGS += -DS132
+	ASFLAGS += -DNRF52_PAN_74
+	ASFLAGS += -DNRF52_PAN_12
+  ASFLAGS += -DNRF52_PAN_58
+  ASFLAGS += -DNRF52_PAN_54
+  ASFLAGS += -DNRF52_PAN_31
+  ASFLAGS += -DNRF52_PAN_51
+  ASFLAGS += -DNRF52_PAN_36
+  ASFLAGS += -DNRF52_PAN_15
+  ASFLAGS += -DNRF52_PAN_20
+  ASFLAGS += -DNRF52_PAN_55
+  ASFLAGS += -DNRF52_PAN_644
+endif
+
   ASFLAGS += -mcpu=cortex-m4
   ASFLAGS += -mthumb -mabi=aapcs
   ASFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
   ASFLAGS += -DBOARD_CUSTOM
 #  ASFLAGS += -DCONFIG_GPIO_AS_PINRESET
   ASFLAGS += -DFLOAT_ABI_HARD
-  ASFLAGS += -DNRF52840_XXAA
-  ASFLAGS += -DNRF_SD_BLE_API_VERSION=6
-  ASFLAGS += -DS140
   ASFLAGS += -DSOFTDEVICE_PRESENT
   ASFLAGS += -DSWI_DISABLE0
 

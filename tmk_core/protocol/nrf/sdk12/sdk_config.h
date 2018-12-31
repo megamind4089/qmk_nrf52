@@ -2451,7 +2451,7 @@
 // <e> TWIS_ENABLED - nrf_drv_twis - TWIS peripheral driver
 //==========================================================
 #ifndef TWIS_ENABLED
-#define TWIS_ENABLED 0
+#define TWIS_ENABLED 1
 #endif
 #if  TWIS_ENABLED
 // <o> TWIS_DEFAULT_CONFIG_ADDR0 - Address0 
@@ -2501,7 +2501,7 @@
  
 
 #ifndef TWIS0_ENABLED
-#define TWIS0_ENABLED 0
+#define TWIS0_ENABLED 1
 #endif
 
 // <q> TWIS1_ENABLED  - Enable TWIS1 instance
@@ -2588,7 +2588,7 @@
 // <e> TWI_ENABLED - nrf_drv_twi - TWI/TWIM peripheral driver
 //==========================================================
 #ifndef TWI_ENABLED
-#define TWI_ENABLED 0
+#define TWI_ENABLED 1
 #endif
 #if  TWI_ENABLED
 // <o> TWI_DEFAULT_CONFIG_FREQUENCY  - Frequency
@@ -2598,7 +2598,7 @@
 // <104857600=> 400k 
 
 #ifndef TWI_DEFAULT_CONFIG_FREQUENCY
-#define TWI_DEFAULT_CONFIG_FREQUENCY 26738688
+#define TWI_DEFAULT_CONFIG_FREQUENCY 104857600
 #endif
 
 // <q> TWI_DEFAULT_CONFIG_CLR_BUS_INIT  - Enables bus clearing procedure during init
@@ -2631,7 +2631,7 @@
 // <e> TWI0_ENABLED - Enable TWI0 instance
 //==========================================================
 #ifndef TWI0_ENABLED
-#define TWI0_ENABLED 0
+#define TWI0_ENABLED 1
 #endif
 #if  TWI0_ENABLED
 // <q> TWI0_USE_EASY_DMA  - Use EasyDMA (if present)
@@ -3536,7 +3536,7 @@
 // <e> NRF_LOG_ENABLED - nrf_log - Logging
 //==========================================================
 #ifndef NRF_LOG_ENABLED
-#define NRF_LOG_ENABLED 1
+#define NRF_LOG_ENABLED 0
 #endif
 #if  NRF_LOG_ENABLED
 // <e> NRF_LOG_USES_COLORS - If enabled then ANSI escape code for colors is prefixed to every string
@@ -3686,7 +3686,7 @@
 
 // <o> NRF_LOG_BACKEND_SERIAL_UART_TX_PIN - UART TX pin 
 #ifndef NRF_LOG_BACKEND_SERIAL_UART_TX_PIN
-#define NRF_LOG_BACKEND_SERIAL_UART_TX_PIN 21
+#define NRF_LOG_BACKEND_SERIAL_UART_TX_PIN 24
 #endif
 
 // <o> NRF_LOG_BACKEND_SERIAL_UART_RX_PIN - UART RX pin 

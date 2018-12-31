@@ -1,7 +1,11 @@
 PROTOCOL_DIR = protocol
 NRF_DIR = $(PROTOCOL_DIR)/nrf
 
-  SRC += $(NRF_DIR)/matrix.c
+  SRC += $(NRF_DIR)/matrix.c \
+  				$(NRF_DIR)/io_expander.c \
+
+  SRC += $(NRF_DIR)/$(NRF_VER_DIR)/ble_common.c \
+       $(NRF_DIR)/$(NRF_VER_DIR)/i2c_master.c \
 
 ifeq ($(MCU_FAMILY),NRF51)
   SRC += $(NRF_DIR)/$(NRF_VER_DIR)/system_nrf51.c
@@ -12,15 +16,11 @@ ifeq ($(MCU_FAMILY),NRF52)
   SRC += $(NRF_DIR)/nrf52/adc.c
 endif
 
-ifeq ($(NRFSDK_VER),15)
-  SRC += $(NRF_DIR)/sdk15/ble_common.c
-endif
   
 ifeq ($(MCU_SERIES), NRF52840)
  SRC += $(NRF_DIR)/$(NRF_VER_DIR)/usbd.c \
        $(NRF_DIR)/$(NRF_VER_DIR)/app_usbd_hid_kbd.c \
        $(NRF_DIR)/$(NRF_VER_DIR)/app_usbd_hid_mouse.c \
-       $(NRF_DIR)/$(NRF_VER_DIR)/i2c_master.c \
        $(NRF_DIR)/$(NRF_VER_DIR)/cli.c \
        $(NRF_DIR)/microshell/core/microshell.c \
        $(NRF_DIR)/microshell/core/mscore.c \

@@ -181,12 +181,15 @@ int main(void) {
   nus_c_init();
 #endif
   // Start execution.
-  NRF_LOG_INFO("HID Keyboard Start!\r\n");
-  timers_start();
-//  advertising_start();
+#if defined(ENABLE_STARTUP_ADV_LIST)
+  advertising_start();
+#elif defined(ENABLE_STARTUP_ADV_NOLIST)
+  restart_advertising_wo_whitelist();
+#endif
 #ifdef NRF_SEPARATE_KEYBOARD_MASTER
   scan_start();
 #endif
+  timers_start();
 
   /* init printf */
   init_printf(NULL, sendchar_pf);
@@ -217,6 +220,7 @@ int main(void) {
   /* init TMK modules */
   keyboard_init();
   host_set_driver(driver);
+  NRF_LOG_INFO("HID Keyboard Start!\r\n");
 
 #ifdef SLEEP_LED_ENABLE
   sleep_led_init();

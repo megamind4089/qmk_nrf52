@@ -57,6 +57,8 @@
 #include "ble_conn_state.h"
 #include "app_timer_appsh.h"
 
+#include "ble_common.h"
+
 #if (NRF_SD_BLE_API_VERSION == 3)
 #define NRF_BLE_MAX_MTU_SIZE            GATT_MTU_SIZE_DEFAULT                       /**< MTU size used in the softdevice enabling and to reply to a BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST event. */
 #endif
@@ -71,7 +73,7 @@
 #define MANUFACTURER_NAME                "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
 
 #define APP_TIMER_PRESCALER              0                                          /**< Value of the RTC1 PRESCALER register. */
-#define APP_TIMER_OP_QUEUE_SIZE          16                                          /**< Size of timer operation queues. */
+#define APP_TIMER_OP_QUEUE_SIZE          50                                          /**< Size of timer operation queues. */
 
 #define BATTERY_LEVEL_MEAS_INTERVAL      APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
 #define MIN_BATTERY_LEVEL                81                                         /**< Minimum simulated battery level. */
@@ -89,10 +91,20 @@
 #define APP_ADV_SLOW_TIMEOUT             180                                        /**< The duration of the slow advertising period (in seconds). */
 
 /*lint -emacro(524, MIN_CONN_INTERVAL) // Loss of precision */
-#define MIN_CONN_INTERVAL                MSEC_TO_UNITS(7.5, UNIT_1_25_MS)            /**< Minimum connection interval (7.5 ms) */
-#define MAX_CONN_INTERVAL                MSEC_TO_UNITS(30, UNIT_1_25_MS)             /**< Maximum connection interval (30 ms). */
-#define SLAVE_LATENCY                    12                                           /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                 MSEC_TO_UNITS(430, UNIT_10_MS)              /**< Connection supervisory timeout (430 ms). */
+#ifndef BLE_HID_MAX_INTERVAL
+  #define BLE_HID_MAX_INTERVAL 90
+#endif
+#ifndef BLE_HID_SLAVE_LATENCY
+  #define BLE_HID_SLAVE_LATENCY 4
+#endif
+//#ifndef BLE_HID_TIMEOUT
+//  #define BLE_HID_TIMEOUT 1000
+//#endif
+#define MIN_CONN_INTERVAL                   MSEC_TO_UNITS(30, UNIT_1_25_MS)           /**< Minimum connection interval (7.5 ms) */
+#define MAX_CONN_INTERVAL                   MSEC_TO_UNITS(BLE_HID_MAX_INTERVAL, UNIT_1_25_MS)            /**< Maximum connection interval (30 ms). */
+#define SLAVE_LATENCY                       BLE_HID_SLAVE_LATENCY                                          /**< Slave latency. */
+#define CONN_SUP_TIMEOUT                    MSEC_TO_UNITS((SLAVE_LATENCY+2)*BLE_HID_MAX_INTERVAL*2, UNIT_10_MS)             /**< Connection supervisory timeout (430 ms). */
+// TIMEOUT > (LATENCY+1)*MAX_INTERVAL*2
 
 #define FIRST_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER)  /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER) /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
@@ -124,13 +136,6 @@
 
 #define DEAD_BEEF                        0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
-#define SCHED_MAX_EVENT_DATA_SIZE        MAX(APP_TIMER_SCHED_EVT_SIZE, \
-                                             BLE_STACK_HANDLER_SCHED_EVT_SIZE)       /**< Maximum size of scheduler events. */
-#ifdef SVCALL_AS_NORMAL_FUNCTION
-#define SCHED_QUEUE_SIZE                 20                                          /**< Maximum number of events in the scheduler queue. More is needed in case of Serialization. */
-#else
-#define SCHED_QUEUE_SIZE                 10                                          /**< Maximum number of events in the scheduler queue. */
-#endif
 
 #define MODIFIER_KEY_POS                 0                                           /**< Position of the modifier byte in the Input Report. */
 #define SCAN_CODE_POS                    2                                           /**< This macro indicates the start position of the key scan code in a HID Report. As per the document titled 'Device Class Definition for Human Interface Devices (HID) V1.11, each report shall have one modifier byte followed by a reserved constant byte and then the key scan code. */
@@ -187,28 +192,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name) {
   app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
-/**@brief Fetch the list of peer manager peer IDs.
- *
- * @param[inout] p_peers   The buffer where to store the list of peer IDs.
- * @param[inout] p_size    In: The size of the @p p_peers buffer.
- *                         Out: The number of peers copied in the buffer.
- */
-void peer_list_get(pm_peer_id_t * p_peers, uint32_t * p_size) {
-  pm_peer_id_t peer_id;
-  uint32_t peers_to_copy;
-
-  peers_to_copy =
-      (*p_size < BLE_GAP_WHITELIST_ADDR_MAX_COUNT) ?
-          *p_size : BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
-
-  peer_id = pm_next_peer_id_get(PM_PEER_ID_INVALID);
-  *p_size = 0;
-
-  while ((peer_id != PM_PEER_ID_INVALID) && (peers_to_copy--)) {
-    p_peers[(*p_size)++] = peer_id;
-    peer_id = pm_next_peer_id_get(peer_id);
-  }
-}
 
 /**@brief Function for starting advertising.
  */
@@ -236,6 +219,17 @@ void advertising_start(void) {
   APP_ERROR_CHECK(ret);
 }
 
+void ble_disconnect() {
+  sd_ble_gap_adv_stop();
+  if (m_conn_handle != BLE_CONN_HANDLE_INVALID) {
+    ret_code_t err_code = sd_ble_gap_disconnect(m_conn_handle,
+    BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+    if (err_code != NRF_ERROR_INVALID_STATE) {
+      APP_ERROR_CHECK(err_code);
+    }
+  }
+}
+
 /**@brief Function for handling Peer Manager events.
  *
  * @param[in] p_evt  Peer Manager event.
@@ -245,7 +239,7 @@ void pm_evt_handler(pm_evt_t const * p_evt) {
 
   switch (p_evt->evt_id) {
   case PM_EVT_BONDED_PEER_CONNECTED: {
-    NRF_LOG_INFO("Connected to a previously bonded device.\r\n");
+    NRF_LOG_INFO("Connected to a previously bonded device: ID%d.\r\n",p_evt->peer_id);
   }
     break;
 
@@ -268,6 +262,34 @@ void pm_evt_handler(pm_evt_t const * p_evt) {
         // Bonded to a new peer, add it to the whitelist.
         m_whitelist_peers[m_whitelist_peer_cnt++] = m_peer_id;
         m_is_wl_changed = true;
+      }
+    }
+  }
+    break;
+
+  case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED: {
+    if (p_evt->params.peer_data_update_succeeded.flash_changed
+        && (p_evt->params.peer_data_update_succeeded.data_id
+            == PM_PEER_DATA_ID_BONDING)) {
+      NRF_LOG_INFO("New Bond, add the peer to the whitelist if possible");
+//      advertising_start();
+      NRF_LOG_INFO("\tm_whitelist_peer_cnt %d, MAX_PEERS_WLIST %d",
+          m_whitelist_peer_cnt + 1, BLE_GAP_WHITELIST_ADDR_MAX_COUNT);
+      // Note: You should check on what kind of white list policy your application should use.
+
+      if (m_whitelist_peer_cnt < BLE_GAP_WHITELIST_ADDR_MAX_COUNT) {
+        // Bonded to a new peer, add it to the whitelist.
+        m_whitelist_peers[m_whitelist_peer_cnt++] = m_peer_id;
+
+        // The whitelist has been modified, update it in the Peer Manager.
+        err_code = pm_device_identities_list_set(m_whitelist_peers,
+            m_whitelist_peer_cnt);
+//        if (err_code != NRF_ERROR_NOT_SUPPORTED) {
+//          APP_ERROR_CHECK(err_code);
+//        }
+
+        err_code = pm_whitelist_set(m_whitelist_peers, m_whitelist_peer_cnt);
+        APP_ERROR_CHECK(err_code);
       }
     }
   }
@@ -337,7 +359,6 @@ void pm_evt_handler(pm_evt_t const * p_evt) {
     break;
 
   case PM_EVT_CONN_SEC_START:
-  case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
   case PM_EVT_PEER_DELETE_SUCCEEDED:
   case PM_EVT_LOCAL_DB_CACHE_APPLIED:
   case PM_EVT_SERVICE_CHANGED_IND_SENT:
@@ -379,7 +400,7 @@ void battery_level_update(void) {
   if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_INVALID_STATE)
       && (err_code != BLE_ERROR_NO_TX_PACKETS)
       && (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)) {
-    APP_ERROR_HANDLER(err_code);
+//    APP_ERROR_HANDLER(err_code);
   }
 }
 
@@ -730,19 +751,6 @@ void on_hid_rep_char_write(ble_hids_evt_t * p_evt) {
   }
 }
 
-/**@brief Function for putting the chip into sleep mode.
- *
- * @note This function will not return.
- */
-void sleep_mode_enter(void) {
-  uint32_t err_code;
-//    APP_ERROR_CHECK(err_code);
-
-  // Go to system-off mode (this function will not return; wakeup will cause a reset).
-  err_code = sd_power_system_off();
-  APP_ERROR_CHECK(err_code);
-}
-
 /**@brief Function for handling HID events.
  *
  * @details This function will be called for all HID events which are passed to the application.
@@ -892,19 +900,19 @@ void on_ble_evt(ble_evt_t * p_ble_evt) {
     m_caps_on = false;
     // disabling alert 3. signal - used for capslock ON
 
-    if (m_is_wl_changed) {
-      // The whitelist has been modified, update it in the Peer Manager.
-      err_code = pm_whitelist_set(m_whitelist_peers, m_whitelist_peer_cnt);
-      APP_ERROR_CHECK(err_code);
-
-      err_code = pm_device_identities_list_set(m_whitelist_peers,
-          m_whitelist_peer_cnt);
-      if (err_code != NRF_ERROR_NOT_SUPPORTED) {
-        APP_ERROR_CHECK(err_code);
-      }
-
-      m_is_wl_changed = false;
-    }
+//    if (m_is_wl_changed) {
+//      // The whitelist has been modified, update it in the Peer Manager.
+//      err_code = pm_whitelist_set(m_whitelist_peers, m_whitelist_peer_cnt);
+//      APP_ERROR_CHECK(err_code);
+//
+//      err_code = pm_device_identities_list_set(m_whitelist_peers,
+//          m_whitelist_peer_cnt);
+//      if (err_code != NRF_ERROR_NOT_SUPPORTED) {
+//        APP_ERROR_CHECK(err_code);
+//      }
+//
+//      m_is_wl_changed = false;
+//    }
     break; // BLE_GAP_EVT_DISCONNECTED
 
   case BLE_GATTC_EVT_TIMEOUT:
@@ -1056,11 +1064,6 @@ void ble_stack_init(void) {
   APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for the Event Scheduler initialization.
- */
-void scheduler_init(void) {
-  APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
-}
 
 /**@brief Function for the Peer Manager initialization.
  *
@@ -1139,14 +1142,6 @@ void advertising_init(void) {
   APP_ERROR_CHECK(err_code);
 }
 
-
-/**@brief Function for the Power manager.
- */
-void power_manage(void) {
-  uint32_t err_code = sd_app_evt_wait();
-
-  APP_ERROR_CHECK(err_code);
-}
 
 /* LED status */
 uint8_t keyboard_leds(void) {
@@ -1313,9 +1308,14 @@ void sendchar_pf(void *p, char c) {
 void restart_advertising_wo_whitelist() {
   uint32_t err_code;
 
-  if (m_conn_handle != BLE_CONN_HANDLE_INVALID) {
+  sd_ble_gap_adv_stop();
+
+#ifdef NRF_SEPARATE_KEYBOARD_MASTER
+  scan_start();
+#endif
+
     ble_adv_modes_config_t options;
-    options.ble_adv_whitelist_enabled = true;
+    options.ble_adv_whitelist_enabled = false;
     options.ble_adv_directed_enabled = false;
     options.ble_adv_directed_slow_enabled = false;
     options.ble_adv_directed_slow_interval = 0;
@@ -1332,31 +1332,15 @@ void restart_advertising_wo_whitelist() {
     m_whitelist_peer_cnt = 0;
     m_is_wl_changed = true;
 
+  if (m_conn_handle != BLE_CONN_HANDLE_INVALID) {
     err_code = sd_ble_gap_disconnect(m_conn_handle,
     BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
     if (err_code != NRF_ERROR_INVALID_STATE) {
       APP_ERROR_CHECK(err_code);
     }
   } else {
-    err_code = ble_advertising_restart_without_whitelist();
-    if (err_code != NRF_ERROR_INVALID_STATE) {
-      APP_ERROR_CHECK(err_code);
-    }
+    err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
   }
-}
-
-void delete_bonds() {
-  uint32_t err_code;
-  if (m_conn_handle != BLE_CONN_HANDLE_INVALID) {
-    err_code = sd_ble_gap_disconnect(m_conn_handle,
-        BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-    if (err_code != NRF_ERROR_INVALID_STATE) {
-      APP_ERROR_CHECK(err_code);
-    }
-  }
-  err_code = pm_peers_delete();
-  APP_ERROR_CHECK(err_code);
-  err_code = ble_advertising_restart_without_whitelist();
   if (err_code != NRF_ERROR_INVALID_STATE) {
     APP_ERROR_CHECK(err_code);
   }
@@ -1386,6 +1370,11 @@ void restart_advertising_id(uint8_t id) {
       APP_ERROR_CHECK(ret);
     }
   }
+  sd_ble_gap_adv_stop();
+
+//#ifdef NRF_SEPARATE_KEYBOARD_MASTER
+//  sd_ble_gap_scan_stop();
+//#endif
 
   memset(m_whitelist_peers, PM_PEER_ID_INVALID, sizeof(m_whitelist_peers));
   m_whitelist_peer_cnt = (sizeof(m_whitelist_peers) / sizeof(pm_peer_id_t));
@@ -1405,29 +1394,18 @@ void restart_advertising_id(uint8_t id) {
     APP_ERROR_CHECK(ret);
   }
 
-//  ret = ble_advertising_start(BLE_ADV_MODE_FAST);
-//  APP_ERROR_CHECK(ret);
-}
+//#ifdef NRF_SEPARATE_KEYBOARD_MASTER
+//  sd_ble_gap_scan_start();
+//#endif
 
-void logger_init() {
-  uint32_t err_code;
-
-  // Initialize.
-  err_code = NRF_LOG_INIT(NULL);
-  APP_ERROR_CHECK(err_code);
-  NRF_LOG_INFO("logger init\r\n");
+  ret = ble_advertising_start(BLE_ADV_MODE_FAST);
+  APP_ERROR_CHECK(ret);
 }
 
 void main_task_start(uint8_t interval) {
   uint32_t err_code = app_timer_start(main_task_timer_id,
       APP_TIMER_TICKS(interval, 0), NULL);
   APP_ERROR_CHECK(err_code);
-}
-void main_loop() {
-  app_sched_execute();
-  if (NRF_LOG_PROCESS() == false) {
-    power_manage();
-  }
 }
 
 static bool enable_ble_send = true;
