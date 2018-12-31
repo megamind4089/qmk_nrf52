@@ -40,7 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "i2c_master.h"
 #endif
 #include "io_expander.h"
-matrix_row_t read_row_ioexpander (uint8_t row);
 
 #ifndef THIS_DEVICE_ROWS
  #include "pin_assign.h"

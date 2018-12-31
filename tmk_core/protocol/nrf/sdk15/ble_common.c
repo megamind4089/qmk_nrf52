@@ -47,10 +47,13 @@ void logger_init(void) {
   APP_ERROR_CHECK(err_code);
 
   NRF_LOG_DEFAULT_BACKENDS_INIT();
+
+#ifdef NRF52840_XXAA
   extern const nrf_log_backend_api_t nrf_log_backend_cdc_acm_api;
   static nrf_log_backend_t backend = {.p_api = &nrf_log_backend_cdc_acm_api};
   nrf_log_backend_add(&backend, NRF_LOG_SEVERITY_INFO);
   nrf_log_backend_enable(&backend);
+#endif
 
   power_management_init();
 }

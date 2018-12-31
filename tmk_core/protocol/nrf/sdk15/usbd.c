@@ -100,6 +100,54 @@ const uint8_t AbsMouseReport[] = {
     HID_RI_END_COLLECTION(0),
 };
 
+
+const uint8_t MouseReport[] = {
+    HID_RI_USAGE_PAGE(8, 0x01), /* Generic Desktop */
+    HID_RI_USAGE(8, 0x02), /* Mouse */
+    HID_RI_COLLECTION(8, 0x01), /* Application */
+        HID_RI_USAGE(8, 0x01), /* Pointer */
+        HID_RI_COLLECTION(8, 0x00), /* Physical */
+
+            HID_RI_USAGE_PAGE(8, 0x09), /* Button */
+            HID_RI_USAGE_MINIMUM(8, 0x01),  /* Button 1 */
+            HID_RI_USAGE_MAXIMUM(8, 0x05),  /* Button 5 */
+            HID_RI_LOGICAL_MINIMUM(8, 0x00),
+            HID_RI_LOGICAL_MAXIMUM(8, 0x01),
+            HID_RI_REPORT_COUNT(8, 0x05),
+            HID_RI_REPORT_SIZE(8, 0x01),
+            HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+            HID_RI_REPORT_COUNT(8, 0x01),
+            HID_RI_REPORT_SIZE(8, 0x03),
+            HID_RI_INPUT(8, HID_IOF_CONSTANT),
+
+            HID_RI_USAGE_PAGE(8, 0x01), /* Generic Desktop */
+            HID_RI_USAGE(8, 0x30), /* Usage X */
+            HID_RI_USAGE(8, 0x31), /* Usage Y */
+            HID_RI_LOGICAL_MINIMUM(8, -127),
+            HID_RI_LOGICAL_MAXIMUM(8, 127),
+            HID_RI_REPORT_COUNT(8, 0x02),
+            HID_RI_REPORT_SIZE(8, 0x08),
+            HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
+
+            HID_RI_USAGE(8, 0x38), /* Wheel */
+            HID_RI_LOGICAL_MINIMUM(8, -127),
+            HID_RI_LOGICAL_MAXIMUM(8, 127),
+            HID_RI_REPORT_COUNT(8, 0x01),
+            HID_RI_REPORT_SIZE(8, 0x08),
+            HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
+
+            HID_RI_USAGE_PAGE(8, 0x0C), /* Consumer */
+            HID_RI_USAGE(16, 0x0238), /* AC Pan (Horizontal wheel) */
+            HID_RI_LOGICAL_MINIMUM(8, -127),
+            HID_RI_LOGICAL_MAXIMUM(8, 127),
+            HID_RI_REPORT_COUNT(8, 0x01),
+            HID_RI_REPORT_SIZE(8, 0x08),
+            HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
+
+        HID_RI_END_COLLECTION(0),
+    HID_RI_END_COLLECTION(0),
+};
+
 #undef CONCAT
 #include "nrf.h"
 #include "nrf_drv_usbd.h"
@@ -228,13 +276,30 @@ APP_USBD_HID_GENERIC_GLOBAL_DEF(m_app_hid_abs_mouse,
 /**
  * @brief Global HID keyboard instance
  * */
-APP_USBD_HID_MOUSE_GLOBAL_DEF(m_app_hid_mouse,
-                              APP_USBD_INTERFACE_MOUSE,
-                              NRF_DRV_USBD_EPIN2,
-                              MOUSE_BUTTON_COUNT,
-                              hid_mouse_user_ev_handler,
-                              APP_USBD_HID_SUBCLASS_BOOT
-);
+//APP_USBD_HID_MOUSE_GLOBAL_DEF(m_app_hid_mouse,
+//                              APP_USBD_INTERFACE_MOUSE,
+//                              NRF_DRV_USBD_EPIN2,
+//                              MOUSE_BUTTON_COUNT,
+//                              hid_mouse_user_ev_handler,
+//                              APP_USBD_HID_SUBCLASS_BOOT
+//);
+static const app_usbd_hid_subclass_desc_t mouse_dsc = {
+  sizeof(MouseReport),
+  APP_USBD_DESCRIPTOR_REPORT,
+  MouseReport
+};
+
+static const app_usbd_hid_subclass_desc_t * mouse_reps[] = {&mouse_dsc};
+
+APP_USBD_HID_GENERIC_GLOBAL_DEF(m_app_hid_mouse,
+                                APP_USBD_INTERFACE_MOUSE,
+                                hid_mouse_user_ev_handler,
+                                (NRF_DRV_USBD_EPIN2),
+                                mouse_reps,
+                                REPORT_IN_QUEUE_SIZE,
+                                REPORT_OUT_MAXSIZE,
+                                APP_USBD_HID_SUBCLASS_NONE,
+                                APP_USBD_HID_PROTO_GENERIC);
 
 /**
  * @brief Global HID keyboard instance
@@ -597,7 +662,8 @@ int usbd_init(void) {
   APP_ERROR_CHECK(ret);
 
   app_usbd_class_inst_t const * class_inst_mouse;
-  class_inst_mouse = app_usbd_hid_mouse_class_inst_get(&m_app_hid_mouse);
+//  class_inst_mouse = app_usbd_hid_mouse_class_inst_get(&m_app_hid_mouse);
+  class_inst_mouse = app_usbd_hid_generic_class_inst_get(&m_app_hid_mouse);
   ret = app_usbd_class_append(class_inst_mouse);
   APP_ERROR_CHECK(ret);
 
@@ -644,7 +710,8 @@ int usbd_send_keyboard(report_keyboard_t *report) {
 }
 
 int usbd_send_mouse(report_mouse_t *report) {
-  return usbd_send_mouse_report(&m_app_hid_mouse, report);
+//  return usbd_send_mouse_report(&m_app_hid_mouse, report);
+  return app_usbd_hid_generic_in_report_set(&m_app_hid_mouse, report, 5);
 }
 
 int usbd_send_abs_mouse(int8_t x, int8_t y) {
