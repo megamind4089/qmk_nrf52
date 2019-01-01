@@ -51,7 +51,7 @@ const uint32_t col_pins[THIS_DEVICE_COLS] = MATRIX_COL_PINS;
 const bool isLeftHand = IS_LEFT_HAND;
 
 #ifndef DEBOUNCE
-#   define DEBOUNCE 5
+#   define DEBOUNCE 2
 #endif
 static uint8_t debouncing = DEBOUNCE;
 
@@ -72,7 +72,11 @@ switch_queue rcv_keys_queue={rcv_keys_buf, 0, 0, 0, sizeof(rcv_keys_buf)/sizeof(
 switch_queue delay_keys_queue={delay_keys_buf, 0, 0, 0, sizeof(delay_keys_buf)/sizeof(delay_keys_buf[0])};
 #ifndef BURST_TRESHOLD
   extern const uint8_t MAINTASK_INTERVAL;
+#ifdef BLE_NUS_MAX_INTERVAL
   #define BURST_THRESHOLD (BLE_NUS_MAX_INTERVAL/MAINTASK_INTERVAL+1)
+#else
+  #define BURST_THRESHOLD 1
+#endif // BLE_NUS_MAX_INTERVAL
 #endif
 
 static size_t push_queue(switch_queue *q, ble_switch_state_t dat) {
@@ -215,6 +219,7 @@ uint8_t matrix_scan_impl(matrix_row_t* _matrix){
 #if defined(NRF_SEPARATE_KEYBOARD_MASTER) || defined(NRF_SEPARATE_KEYBOARD_SLAVE)
         matrix_dummy[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
 #else
+        matrix_dummy[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
         matrix[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
 #endif
       }
@@ -338,10 +343,16 @@ uint8_t matrix_scan_impl(matrix_row_t* _matrix){
 }
 
 char str[16];
+
+__attribute__ ((weak))
+void matrix_scan_kb(void) {
+    matrix_scan_user();
+}
+
 uint8_t matrix_scan(void)
 {
   uint8_t res = matrix_scan_impl(matrix);
-  matrix_scan_user();
+  matrix_scan_quantum();
   return res;
 }
 
