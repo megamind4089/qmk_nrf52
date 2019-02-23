@@ -24,11 +24,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 void matrix_init_user() {
 //  rgblight_mode_noeeprom(35);
   set_usb_enabled(true);
-  avoid_bootloader_issue();
-
-  i2c_init();
-
-  uint8_t dat[5] = { 5, 7, 1, 8, 5^7^1^8 };
-  i2c_transmit(SLAVE_I2C_ADDRESS, dat, sizeof(dat));
-  i2c_uninit();
 }
