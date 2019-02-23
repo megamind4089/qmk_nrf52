@@ -4,6 +4,7 @@
 #include "nrf_log_default_backends.h"
 #include "nrf_pwr_mgmt.h"
 #include "nrf_gpio.h"
+#include "nrfx_power.h"
 #include "peer_manager.h"
 
 #include "app_ble_func.h"
@@ -111,6 +112,11 @@ void sleep_mode_enter(void) {
   extern const uint32_t row_pins[THIS_DEVICE_ROWS];
   extern const uint32_t col_pins[THIS_DEVICE_COLS];
   int i;
+
+  if (nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_CONNECTED ||
+      nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_READY) {
+    return;
+  }
   for (i=0; i<THIS_DEVICE_ROWS; i++) {
     nrf_gpio_pin_clear(row_pins[i]);
   }
