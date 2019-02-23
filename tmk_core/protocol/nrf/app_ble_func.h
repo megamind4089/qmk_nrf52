@@ -18,6 +18,14 @@ typedef union {
 _Static_assert(sizeof(ble_switch_state_t) == 2,
     "too large bitfield");
 
+typedef struct {
+  uint8_t row_num;
+  uint8_t col_num;
+  uint8_t row_pin_start;
+  uint8_t col_pin_start;
+  uint8_t checksum;
+} lp_mat_config_t;
+
 __WEAK void ble_nus_packetrcv_handler(ble_switch_state_t* buf, uint8_t len);
 __WEAK void ble_nus_on_disconnect();
 

@@ -238,25 +238,50 @@ uint8_t matrix_scan_impl(matrix_row_t* _matrix){
   uint8_t slave_offset = isLeftHand ? THIS_DEVICE_ROWS : 0;
   uint8_t slave_matrix_changed = 0;
   uint8_t i2c_dat[MATRIX_ROWS];
-  memset(i2c_dat, 0, sizeof(i2c_dat));
-  i2c_readReg(SLAVE_I2C_ADDRESS, 0, i2c_dat, MATRIX_ROWS - THIS_DEVICE_ROWS, 0);
+  memset(i2c_dat, 0xFF, sizeof(i2c_dat));
+//  i2c_readReg(SLAVE_I2C_ADDRESS, 0, i2c_dat, MATRIX_ROWS - THIS_DEVICE_ROWS, 0);
+  i2c_init();
+  i2c_receive(SLAVE_I2C_ADDRESS, i2c_dat, MATRIX_ROWS - THIS_DEVICE_ROWS);
+  i2c_uninit();
+  uint8_t comm_error=0;
   for (uint8_t i = 0; i < MATRIX_ROWS - THIS_DEVICE_ROWS; i++) {
-    if (matrix_dummy[i + slave_offset] != i2c_dat[i]) {
-      for (uint8_t j = 0; j < MATRIX_COLS; j++) {
-        if ((matrix_dummy[i + slave_offset] ^ i2c_dat[i]) & (1 << j)) {
-          ble_switch_send[0].dat[0] = 0xff;
-          ble_switch_send[0].dat[1] = ((int) sync) % 0xff; // synchronizing packet
-          ble_switch_send[slave_matrix_changed + 1].timing = timing;
-          ble_switch_send[slave_matrix_changed + 1].state = (i2c_dat[i] >> j) & 1;
-          ble_switch_send[slave_matrix_changed + 1].id = i * MATRIX_COLS + j;
-          slave_matrix_changed++;
+    if (i2c_dat[i]==0xFF) {
+      comm_error=1;
+    }
+  }
+  if (!comm_error) {
+    for (uint8_t i = 0; i < MATRIX_ROWS - THIS_DEVICE_ROWS; i++) {
+      if (matrix_dummy[i + slave_offset] != i2c_dat[i]) {
+        for (uint8_t j = 0; j < MATRIX_COLS; j++) {
+          if ((matrix_dummy[i + slave_offset] ^ i2c_dat[i]) & (1 << j)) {
+            ble_switch_send[0].dat[0] = 0xff;
+            ble_switch_send[0].dat[1] = ((int) sync) % 0xff; // synchronizing packet
+            ble_switch_send[slave_matrix_changed + 1].timing = timing;
+            ble_switch_send[slave_matrix_changed + 1].state = (i2c_dat[i] >> j) & 1;
+            ble_switch_send[slave_matrix_changed + 1].id = i * MATRIX_COLS + j;
+            slave_matrix_changed++;
+          }
         }
       }
+      matrix_dummy[i + slave_offset] = i2c_dat[i];
     }
-    matrix_dummy[i + slave_offset] = i2c_dat[i];
+    for (int i=0; i<slave_matrix_changed; i++) {
+      push_queue(&rcv_keys_queue, ble_switch_send[i+1]);
+    }
   }
-  for (int i=0; i<slave_matrix_changed; i++) {
-    push_queue(&rcv_keys_queue, ble_switch_send[i+1]);
+  else {
+#ifdef USE_LP_MAT_EXPANDER
+    // initialize LP_MAT_EXPANDER
+    i2c_init();
+    lp_mat_config_t lpconf = LP_MAT_CONFIG;
+    uint8_t* plpconf = (uint8_t*)&lpconf;
+    lpconf.checksum = 0;
+    for(uint8_t i=0; i<sizeof(lpconf)-1; i++) {
+      lpconf.checksum ^= plpconf[i];
+    }
+    i2c_transmit(SLAVE_I2C_ADDRESS, plpconf, sizeof(lpconf));
+    i2c_uninit();
+#endif
   }
 #endif
 
@@ -401,6 +426,7 @@ matrix_row_t read_cols(void)
   return row;
 }
 
+__attribute__ ((weak))
 matrix_row_t read_row(uint8_t row)
 {
 #ifdef USE_I2C_IOEXPANDER
