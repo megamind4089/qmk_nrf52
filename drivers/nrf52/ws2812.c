@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 nrfx_pwm_t pwm0 = NRFX_PWM_INSTANCE(0);
 
+#define DUMMY_SIGNAL_LEN 10
+
 void pwm_handler(nrfx_pwm_evt_type_t event_type) {
 
 }
@@ -54,9 +56,10 @@ void ws2812_setleds_pin (LED_TYPE *ledarray, uint16_t number_of_leds,uint8_t pin
 
   const uint16_t t0H = PWM_0H_DURATION | (0x8000);
   const uint16_t t1H = PWM_1H_DURATION | (0x8000);
-  nrf_pwm_values_common_t led[RGBLED_NUM * 3 * 8 + 8];
+  nrf_pwm_values_common_t led[RGBLED_NUM * 3 * 8 + DUMMY_SIGNAL_LEN*3*8 + 8];
   nrf_pwm_values_t p_led = { .p_common = led };
-  nrf_pwm_sequence_t pwm_seq = { .values = p_led, .length = number_of_leds*3*8+8,
+  nrf_pwm_sequence_t pwm_seq = { .values = p_led,
+      .length = number_of_leds*3*8 + DUMMY_SIGNAL_LEN*3*8 +8,
       .repeats = 0, .end_delay = 0, };
   uint16_t* p_dat = &led[0];
 
@@ -74,6 +77,13 @@ void ws2812_setleds_pin (LED_TYPE *ledarray, uint16_t number_of_leds,uint8_t pin
       *p_dat++ = (ledarray[i].b & (mask >> j)) ? t1H : t0H;
     }
   }
+
+  for (int i = 0; i < DUMMY_SIGNAL_LEN; i++) {
+    for (int j = 0; j < 24; j++) {
+      *p_dat++ = t0H;
+    }
+  }
+  // reset signal
   *p_dat++ = 0x8000;
   *p_dat++ = 0x8000;
   *p_dat++ = 0x8000;
