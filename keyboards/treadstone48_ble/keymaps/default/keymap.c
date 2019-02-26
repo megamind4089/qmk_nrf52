@@ -66,19 +66,33 @@ enum tapdances{
 #define KC_XXXXX KC_NO
 #define KC_KANJI KANJI
 
-#define KC_RST   RESET
-#define KC_LRST  RGBRST
-#define KC_LTOG  RGB_TOG
-#define KC_LHUI  RGB_HUI
-#define KC_LHUD  RGB_HUD
-#define KC_LSAI  RGB_SAI
-#define KC_LSAD  RGB_SAD
-#define KC_LVAI  RGB_VAI
-#define KC_LVAD  RGB_VAD
-#define KC_LMOD  RGB_MOD
+
+// #define KC_RST   RESET
+// #define KC_LRST  RGBRST
+// #define KC_LTOG  RGB_TOG
+// #define KC_LHUI  RGB_HUI
+// #define KC_LHUD  RGB_HUD
+// #define KC_LSAI  RGB_SAI
+// #define KC_LSAD  RGB_SAD
+// #define KC_LVAI  RGB_VAI
+// #define KC_LVAD  RGB_VAD
+// #define KC_LMOD  RGB_MOD
 #define KC_KNRM  AG_NORM
 #define KC_KSWP  AG_SWAP
 #define KC_DEBUG DEBUG
+
+#define KC_RST   ENT_DFU
+#define KC_BATT  BATT_LV
+#define KC_BTON  BLE_EN
+#define KC_BTOF  BLE_DIS
+#define KC_USBON USB_EN
+#define KC_USBOF USB_DIS
+#define KC_BTNEW AD_WO_L
+#define KC_BTID0 ADV_ID0
+#define KC_BTID1 ADV_ID1
+#define KC_BTID2 ADV_ID2
+#define KC_BTID3 ADV_ID3
+#define KC_BTID4 ADV_ID4
 
 #define KC_TBSF  LSFT_T(KC_TAB)
 // #define KC_SPSF  LSFT_T(KC_SPC)
@@ -138,11 +152,11 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_ADJUST] = LAYOUT_BASE_kc( \
   //,------------------------------------------------------------------------------------------.
-      XXXXX,   RST,  LRST,  KNRM,  KSWP, XXXXX, XXXXX,  WH_L,  WH_U,  HOME,  PGUP,        XXXXX,\
+      XXXXX,   RST,  BATT,  KNRM,  KSWP, XXXXX, XXXXX,  WH_L,  WH_U, XXXXX, XXXXX,        XXXXX,\
   //|------+------+------+------+------+------|------+------+------+------+------+-------------|
-      XXXXX,  LTOG,  LHUI,  LSAI,  LVAI, XXXXX, XXXXX,  WH_R,  WH_D,   END,  PGDN,        XXXXX,\
+      XXXXX,  BTON, USBON, BTID0, BTID2, BTID4, XXXXX,  WH_R,  WH_D, XXXXX, XXXXX,        XXXXX,\
   //|------+------+------+------+------+------|------+------+------+------+------+------+------|
-      _____,  LMOD,  LHUD,  LSAD,  LVAD, XXXXX, XXXXX, XXXXX,  BTN1,  BTN2, XXXXX,  MS_U,       \
+      _____,  BTOF, USBOF, BTID1, BTID3, BTNEW, XXXXX, XXXXX,  BTN1,  BTN2, XXXXX,  MS_U,       \
   //|------+------+------+------+------+------|------+------+------+------+------+------+------|
       _____, _____, _____, _____,        XXXXX,        XXXXX, _____, XXXXX,  MS_L,  MS_D,  MS_R,\
   //`------------------------------------------------------------------------------------------'
@@ -150,64 +164,6 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ExtraKey: Split backspace key or it is below the enter key.
   )
 };
-
-#define L_BASE _BASE
-#define L_LOWER (1<<_LOWER)
-#define L_RAISE (1<<_RAISE)
-#define L_ADJUST (1<<_ADJUST)
-#define L_ADJUST_TRI (L_ADJUST|L_RAISE|L_LOWER)
-
-#ifdef SSD1306OLED
-typedef struct {
-  uint8_t state;
-  char name[8];
-}LAYER_DISPLAY_NAME;
-
-#define LAYER_DISPLAY_MAX 5
-const LAYER_DISPLAY_NAME layer_display_name[LAYER_DISPLAY_MAX] = {
-  {L_BASE, "Base"},
-  {L_BASE + 1, "Base"},
-  {L_LOWER, "Lower"},
-  {L_RAISE, "Raise"},
-  {L_ADJUST_TRI, "Adjust"}
-};
-
-static inline const char* get_leyer_status(void) {
-
-  for (uint8_t i = 0; i < LAYER_DISPLAY_MAX; ++i) {
-    if (layer_state == 0 && layer_display_name[i].state == default_layer_state) {
-
-      return layer_display_name[i].name;
-    } else if (layer_state != 0 && layer_display_name[i].state == layer_state) {
-
-      return layer_display_name[i].name;
-    }
-  }
-
-  return "?";
-}
-
-static char layer_status_buf[24] = "Layer state ready.\n";
-static inline void update_keymap_status(void) {
-
-  snprintf(layer_status_buf, sizeof(layer_status_buf) - 1, "OS:%s Layer:%s\n",
-    keymap_config.swap_lalt_lgui? "win" : "mac", get_leyer_status());
-}
-
-static inline void render_keymap_status(struct CharacterMatrix *matrix) {
-
-  matrix_write(matrix, layer_status_buf);
-}
-
-#define UPDATE_KEYMAP_STATUS() update_keymap_status()
-#define RENDER_KEYMAP_STATUS(a) render_keymap_status(a)
-
-#else
-
-#define UPDATE_KEYMAP_STATUS()
-#define RENDER_KEYMAP_STATUS(a)
-
-#endif
 
 static inline void update_change_layer(bool pressed, uint8_t layer1, uint8_t layer2, uint8_t layer3) {
 
