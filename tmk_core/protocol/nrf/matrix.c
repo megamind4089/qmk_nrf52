@@ -168,7 +168,7 @@ void matrix_init(void) {
 }
 
 static inline void set_received_key(ble_switch_state_t key, bool from_slave) {
-  const uint8_t matrix_offset = (isLeftHand&&from_slave) ? THIS_DEVICE_ROWS : 0;
+  const uint8_t matrix_offset = (isLeftHand ^ from_slave) ?  0 : THIS_DEVICE_ROWS;
 
   uint8_t row = key.id / MATRIX_COLS;
   uint8_t col = key.id % MATRIX_COLS;
