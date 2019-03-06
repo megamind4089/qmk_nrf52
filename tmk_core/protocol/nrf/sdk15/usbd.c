@@ -660,6 +660,8 @@ int usbd_init(void) {
   class_inst_kbd = app_usbd_hid_kbd_class_inst_get(&m_app_hid_kbd);
   ret = app_usbd_class_append(class_inst_kbd);
   APP_ERROR_CHECK(ret);
+  ret = app_usbd_class_rwu_register(class_inst_kbd);
+  APP_ERROR_CHECK(ret);
 
   app_usbd_class_inst_t const * class_inst_mouse;
 //  class_inst_mouse = app_usbd_hid_mouse_class_inst_get(&m_app_hid_mouse);
@@ -706,6 +708,11 @@ int usbd_send_keyboard(report_keyboard_t *report) {
   NRF_LOG_DEBUG("%d", report->keys[0]);
   uint8_t res = usbd_send_kbd_report(&m_app_hid_kbd, report);
   NRF_LOG_DEBUG("res:%d", res);
+
+  if (nrf_drv_usbd_suspend_check()) {
+    app_usbd_wakeup_req();
+  }
+
   return res;
 }
 
