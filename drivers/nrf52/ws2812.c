@@ -21,6 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrfx_power.h"
+#ifndef RGB_DI_PIN
+#include "pin_assign.h"
+#endif
 
 #define PWM_PERIOD ((int) (1.25f / 0.0625f))
 #define PWM_0H_DURATION ((int) (0.4f / 0.0625f))
