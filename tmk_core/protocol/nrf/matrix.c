@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "app_ble_func.h"
 
 #ifdef USE_I2C
-#include "i2c_master.h"
+#include "i2c.h"
 #endif
 #include "io_expander.h"
 
@@ -174,8 +174,11 @@ void matrix_init(void) {
     matrix_debouncing[i] = 0;
   }
 
-#ifdef USE_I2C
+#if defined(NRF_SEPARATE_KEYBOARD_MASTER) && defined(USE_I2C)
   i2c_init();
+#endif
+#if defined(NRF_SEPARATE_KEYBOARD_SLAVE) && defined(USE_I2C)
+  i2cs_init();
 #endif
   matrix_init_user();
 }
@@ -239,6 +242,7 @@ uint8_t matrix_scan_impl(matrix_row_t* _matrix){
         }
 #if defined(NRF_SEPARATE_KEYBOARD_MASTER) || defined(NRF_SEPARATE_KEYBOARD_SLAVE)
         matrix_dummy[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
+//        matrix[i + matrix_offset] = matrix_debouncing[i + matrix_offset]; Do not set matrix directory
 #else
         matrix_dummy[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
         matrix[i + matrix_offset] = matrix_debouncing[i + matrix_offset];
@@ -252,7 +256,7 @@ uint8_t matrix_scan_impl(matrix_row_t* _matrix){
     push_queue(&delay_keys_queue, ble_switch_send[i+1]);
   }
 
-#ifdef USE_I2C
+#if defined(NRF_SEPARATE_KEYBOARD_MASTER) && defined(USE_I2C)
 #if MATRIX_COLS>8
 #error "MATRIX_COLS should be less than eight for I2C "
 #endif
@@ -336,11 +340,16 @@ uint8_t matrix_scan_impl(matrix_row_t* _matrix){
 //  cnt2%=10000;
 
 #ifdef NRF_SEPARATE_KEYBOARD_SLAVE
+#ifdef USE_I2C
+  i2cs_prepare((uint8_t*)&matrix_dummy[matrix_offset], sizeof(matrix_row_t)*THIS_DEVICE_ROWS);
+  UNUSED_VARIABLE(ble_switch_send);
+#else
   if (matrix_changed) {
     NRF_LOG_DEBUG("NUS send");
     ble_nus_send_bytes((uint8_t*) ble_switch_send, (matrix_changed+1)*sizeof(ble_switch_state_t));
     send_flag = true;
   }
+#endif
 #else
   UNUSED_VARIABLE(ble_switch_send);
 #endif
@@ -559,10 +568,12 @@ void ble_nus_on_disconnect() {
 void ble_nus_packetrcv_handler(ble_switch_state_t* buf, uint8_t len) {
   static uint8_t prev_recv_timing;
   int i=0;
+  int32_t slave_time_est;
   if (buf[0].dat[0]==0xFF) {
     // master and slave synchronizing
     NRF_LOG_DEBUG("%d %d %d %d",timing, buf[0].dat[1], prev_recv_timing, ((int32_t)timing+buf[0].dat[1]-prev_recv_timing) % 0xFF);
-    timing=((int32_t)timing+buf[0].dat[1]-prev_recv_timing) % 0xFF;
+    slave_time_est = (int32_t)buf[0].dat[1];
+    timing=((int32_t)timing+slave_time_est-prev_recv_timing) % 0xFF;
     prev_recv_timing = timing;
     i=1;
   }

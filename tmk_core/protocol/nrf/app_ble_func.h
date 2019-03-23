@@ -1,6 +1,7 @@
 #ifndef TMK_CORE_PROTOCOL_NRF_APP_BLE_FUNC_H_
 #define TMK_CORE_PROTOCOL_NRF_APP_BLE_FUNC_H_
 
+#include "nrf.h"
 #include <stdint.h>
 #include <stdbool.h>
 

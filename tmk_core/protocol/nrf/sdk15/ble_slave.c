@@ -86,7 +86,7 @@
   #define BLE_NUS_MIN_INTERVAL 20
 #endif
 #ifndef BLE_NUS_MAX_INTERVAL
-  #define BLE_NUS_MAX_INTERVAL 75
+  #define BLE_NUS_MAX_INTERVAL 60
 #endif
 #if BLE_NUS_MIN_INTERVAL > BLE_NUS_MAX_INTERVAL
 #error "MIN_INTERVAL should be larger than MAX_INTERVAL"

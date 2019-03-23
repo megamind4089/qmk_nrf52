@@ -7,7 +7,7 @@
 
 #ifdef USE_I2C_IOEXPANDER
 #include <stdint.h>
-#include "i2c_master.h"
+#include "i2c.h"
 #include "io_expander.h"
 #include "matrix.h"
 
@@ -25,6 +25,12 @@ matrix_row_t read_row_ioexpander (uint8_t row) {
     i2c_init();
     i2c_readReg(ioexpander_addrs[row], 0, dat, 2, 0);
     matrix_row_state = ~((((uint16_t)dat[1]) << 8) | dat[0]);
+    i2c_uninit();
+    break;
+  case PCA9654:
+    i2c_init();
+    i2c_receive(ioexpander_addrs[row], dat, 1);
+    matrix_row_state = ~dat[0];
     i2c_uninit();
     break;
   default:

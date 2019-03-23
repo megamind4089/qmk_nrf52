@@ -1,7 +1,6 @@
-#include "i2c_master.h"
-
 #include <string.h>
 
+#include "i2c.h"
 #include "nrf_drv_twi.h"
 
 static const nrf_drv_twi_t m_twi_master = NRF_DRV_TWI_INSTANCE(0);

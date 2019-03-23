@@ -13,7 +13,8 @@
 #include "matrix.h"
 
 typedef enum {
-  TCA9555
+  TCA9555,
+  PCA9654
 } IOEXPANDER_TYPEDEF;
 
 matrix_row_t read_row_ioexpander (uint8_t row);
