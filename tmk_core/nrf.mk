@@ -85,6 +85,7 @@ ifeq ($(NRFSDK_VER), 12)
     $(NRFSDK_ROOT)/components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
     $(NRFSDK_ROOT)/components/drivers_nrf/uart/nrf_drv_uart.c \
     $(NRFSDK_ROOT)/components/drivers_nrf/twi_master/nrf_drv_twi.c \
+    $(NRFSDK_ROOT)/components/drivers_nrf/twis_slave/nrf_drv_twis.c \
     $(NRFSDK_ROOT)/components/ble/common/ble_advdata.c \
     $(NRFSDK_ROOT)/components/ble/common/ble_conn_params.c \
     $(NRFSDK_ROOT)/components/ble/common/ble_conn_state.c \
@@ -117,6 +118,7 @@ ifeq ($(NRFSDK_VER), 12)
     $(TMK_PATH)/protocol/chibios/lufa_utils \
     $(NRFSDK_ROOT)/components/drivers_nrf/comp \
     $(NRFSDK_ROOT)/components/drivers_nrf/twi_master \
+    $(NRFSDK_ROOT)/components/drivers_nrf/twis_slave \
     $(NRFSDK_ROOT)/components/ble/ble_services/ble_ancs_c \
     $(NRFSDK_ROOT)/components/ble/ble_services/ble_ias_c \
     $(NRFSDK_ROOT)/components/libraries/pwm \

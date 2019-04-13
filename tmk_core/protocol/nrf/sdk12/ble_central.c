@@ -61,10 +61,10 @@
 #define SCAN_TIMEOUT                0
 
 #ifndef BLE_NUS_MIN_INTERVAL
-  #define BLE_NUS_MIN_INTERVAL 60
+  #define BLE_NUS_MIN_INTERVAL 30
 #endif
 #ifndef BLE_NUS_MAX_INTERVAL
-  #define BLE_NUS_MAX_INTERVAL 75
+  #define BLE_NUS_MAX_INTERVAL 60
 #endif
 #if BLE_NUS_MIN_INTERVAL > BLE_NUS_MAX_INTERVAL
 #error "MIN_INTERVAL should be larger than MAX_INTERVAL"
@@ -311,8 +311,9 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, const ble_nus_c_evt
             break;
 
         case BLE_NUS_C_EVT_NUS_RX_EVT:
-            NRF_LOG_INFO("NUS:Received\r\n");
-            ble_nus_packetrcv_handler((ble_switch_state_t*)p_ble_nus_evt->p_data, p_ble_nus_evt->data_len);
+            NRF_LOG_INFO("NUS:Received'%d\r\n", p_ble_nus_evt->data_len);
+            ble_nus_packetrcv_handler((ble_switch_state_t*)p_ble_nus_evt->p_data,
+                p_ble_nus_evt->data_len/sizeof(ble_switch_state_t));
             // for (uint32_t i = 0; i < p_ble_nus_evt->data_len; i++)
             // {
             //     while (app_uart_put( p_ble_nus_evt->p_data[i]) != NRF_SUCCESS);

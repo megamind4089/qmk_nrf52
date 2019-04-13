@@ -2501,14 +2501,14 @@
  
 
 #ifndef TWIS0_ENABLED
-#define TWIS0_ENABLED 1
+#define TWIS0_ENABLED 0
 #endif
 
 // <q> TWIS1_ENABLED  - Enable TWIS1 instance
  
 
 #ifndef TWIS1_ENABLED
-#define TWIS1_ENABLED 0
+#define TWIS1_ENABLED 1
 #endif
 
 // <q> TWIS_ASSUME_INIT_AFTER_RESET_ONLY  - Assume that any instance would be initialized only once

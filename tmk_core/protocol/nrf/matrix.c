@@ -151,7 +151,7 @@ static uint8_t sync;
 void radio_event_callback(bool active){
   if(!active && send_flag){
 #ifdef NRF_SEPARATE_KEYBOARD_SLAVE
-    sync = timing;
+    sync = timing % 0xFF;
     send_flag = false;
 #endif
   }
@@ -343,13 +343,12 @@ uint8_t matrix_scan_impl(matrix_row_t* _matrix){
 #ifdef USE_I2C
   i2cs_prepare((uint8_t*)&matrix_dummy[matrix_offset], sizeof(matrix_row_t)*THIS_DEVICE_ROWS);
   UNUSED_VARIABLE(ble_switch_send);
-#else
+#endif
   if (matrix_changed) {
     NRF_LOG_DEBUG("NUS send");
     ble_nus_send_bytes((uint8_t*) ble_switch_send, (matrix_changed+1)*sizeof(ble_switch_state_t));
     send_flag = true;
   }
-#endif
 #else
   UNUSED_VARIABLE(ble_switch_send);
 #endif
