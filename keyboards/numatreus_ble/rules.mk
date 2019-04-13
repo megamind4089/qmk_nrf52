@@ -1,5 +1,5 @@
 
-DEFAULT_FOLDER = numatreus_ble/rev1
+DEFAULT_FOLDER = numatreus_ble/rev2
 
 NRF_DEBUG = no
 
