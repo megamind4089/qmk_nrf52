@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 
 int i2c_init(void);

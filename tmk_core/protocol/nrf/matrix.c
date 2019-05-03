@@ -36,9 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "app_ble_func.h"
 
-#ifdef USE_I2C
 #include "i2c.h"
-#endif
 #include "io_expander.h"
 
 #ifndef MATRIX_ROW_PINS
@@ -178,6 +176,9 @@ void matrix_init(void) {
   i2c_init();
 #endif
 #if defined(NRF_SEPARATE_KEYBOARD_SLAVE) && defined(USE_I2C)
+  i2cs_init();
+#endif
+#if defined(USE_AS_I2C_SLAVE)
   i2cs_init();
 #endif
   matrix_init_user();
@@ -338,6 +339,11 @@ uint8_t matrix_scan_impl(matrix_row_t* _matrix){
 //  }
 //  cnt2++;
 //  cnt2%=10000;
+
+#if defined(USE_AS_I2C_SLAVE)
+  i2cs_prepare((uint8_t*)&matrix_dummy[matrix_offset], sizeof(matrix_row_t)*THIS_DEVICE_ROWS);
+  UNUSED_VARIABLE(ble_switch_send);
+#endif
 
 #ifdef NRF_SEPARATE_KEYBOARD_SLAVE
 #ifdef USE_I2C
