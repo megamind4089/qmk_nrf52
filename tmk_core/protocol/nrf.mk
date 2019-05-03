@@ -7,6 +7,7 @@ NRF_DIR = $(PROTOCOL_DIR)/nrf
   SRC += $(NRF_DIR)/$(NRF_VER_DIR)/ble_common.c \
        $(NRF_DIR)/$(NRF_VER_DIR)/i2c_master.c \
        $(NRF_DIR)/$(NRF_VER_DIR)/i2c_slave.c \
+       $(NRF_DIR)/$(NRF_VER_DIR)/spi_master.c \
 
 ifeq ($(MCU_FAMILY),NRF51)
   SRC += $(NRF_DIR)/$(NRF_VER_DIR)/system_nrf51.c

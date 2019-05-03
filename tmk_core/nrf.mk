@@ -432,6 +432,7 @@ NRFLIBSRC += \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_uart.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_uarte.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_saadc.c \
+  $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_spim.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twi.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twim.c \
   $(NRFSDK_ROOT)/modules/nrfx/drivers/src/nrfx_twis.c \

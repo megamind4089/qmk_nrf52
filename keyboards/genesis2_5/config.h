@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Sekigon
+Copyright 2019 Sekigon
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,25 +20,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /* USB Device descriptor parameter */
 #define VENDOR_ID       0xFEED
-#define PRODUCT_ID      0x6464
-#define DEVICE_VER      0x0001
-/* in python2: list(u"whatever".encode('utf-16-le')) */
-/*   at most 32 characters or the ugly hack in usb_main.c borks */
-#define MANUFACTURER QMK
-#define PRODUCT BLE Micro Test
-#define DESCRIPTION QMK based keyboard
+#define PRODUCT_ID      0xEACD
+#define DEVICE_VER      0x0010
+#define MANUFACTURER    gonnoc
+#define PRODUCT         Genesis2.5
+#define DESCRIPTION     2.5 Dimensions keyboard
 
+#define PROGMEM
 /* key matrix size */
-#define MATRIX_ROWS 1
-#define MATRIX_COLS 19
+#define MATRIX_ROWS 12
+#define MATRIX_COLS 6
 
 #define DIODE_DIRECTION COL2ROW
+#define USE_I2C_IOEXPANDER
 
 /* define if matrix has ghost */
 //#define MATRIX_HAS_GHOST
 
 /* Set 0 if debouncing isn't needed */
-#define DEBOUNCE    1
+#define DEBOUNCE    3
 
 /* Mechanical locking support. Use KC_LCAP, KC_LNUM or KC_LSCR instead in keymap */
 #define LOCKING_SUPPORT_ENABLE
@@ -49,6 +49,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define IS_COMMAND() ( \
     keyboard_report->mods == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_RSHIFT)) \
 )
+
+#define TAPPING_TERM 225
+#define PERMISSIVE_HOLD
+//#define DEBUG_ACTION
 
 //#define RGBLIGHT_ANIMATIONS
 //#define RGB_DI_PIN 8     // The pin the LED strip is connected to
