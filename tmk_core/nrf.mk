@@ -909,8 +909,7 @@ $(TARGET).ble.zip: $(TARGET).bin
 	if ! type "nrfutil" > /dev/null 2>&1; then \
 		echo 'ERROR: nrfutil is not found'; exit 1;\
 	fi	
-	echo $(NRFUTIL) pkg generate --debug-mode --hw-version 0 --sd-req 0x8C --key-file $(PRIV_KEY) --application .build/$(TARGET).hex $(TARGET).zip
-	$(NRFUTIL) pkg generate --debug-mode --hw-version 0 --sd-req 0x8C --key-file $(PRIV_KEY) --application .build/$(TARGET).hex $(TARGET).zip
+	$(NRFUTIL) pkg generate --debug-mode --hw-version 0 --sd-req 0x8C --key-file $(PRIV_KEY) --application $(TARGET).bin $(TARGET).zip
 
 dfu_ble: $(TARGET).ble.zip
 
