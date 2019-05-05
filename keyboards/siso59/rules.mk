@@ -7,6 +7,7 @@ NRF_DEBUG = no
 MCU_LDSCRIPT = nrf52832
 MCU_SERIES = NRF52832
 NRFSDK_ROOT := $(NRFSDK12_ROOT) #Path to nRF SDK v15.0.0
+PRIV_KEY := priv.pem
 
 
 MOUSEKEY_ENABLE = yes	# Mouse keys
