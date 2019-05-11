@@ -47,7 +47,7 @@ extern "C" {
 
 //#include "nrf_gpio.h"
 
-#define GPIO(port, pin) ((port << 6) | pin)
+#define GPIO(port, pin) ((port << 5) | pin)
 #define PIN1 GPIO(0,8)
 #define PIN2 GPIO(0,11)
 #define PIN5 GPIO(0,18)
