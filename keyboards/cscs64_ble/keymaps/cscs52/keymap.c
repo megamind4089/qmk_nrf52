@@ -21,10 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 enum custom_keycodes {
     // BLE keys
     AD_WO_L = SAFE_RANGE, /* Start advertising without whitelist  */
-    BLE_DIS,              /* Disable BLE HID sending              */
-    BLE_EN,               /* Enable BLE HID sending               */
-    USB_DIS,              /* Disable USB HID sending              */
-    USB_EN,               /* Enable USB HID sending               */
+    SEL_BLE,		  /* Select BLE HID Sending		  */
+    SEL_USB,		  /* Select USB HID Sending		  */
+    TOG_HID,		  /* Toggle BLE/USB HID Sending		  */
     DELBNDS,              /* Delete all bonding                   */
     ADV_ID0,              /* Start advertising to PeerID 0        */
     ADV_ID1,              /* Start advertising to PeerID 1        */
@@ -42,6 +41,10 @@ enum custom_keycodes {
     ENT_DFU,              /* Start bootloader                     */
     ENT_SLP,              /* Deep sleep mode                      */
 
+    // other keys
+    EISU,
+    KANA,
+
     // default layer control
     QWERTY,
     COLEMAK,
@@ -53,10 +56,6 @@ enum custom_keycodes {
     RAISE,
     ADJUST,
     CONFIG,
-
-    // other keys
-    EISU,
-    KANA,
 
     // combination keycode and layer
     RAISE_SPC,
@@ -234,151 +233,101 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [_CONFIG] =  LAYOUT(
     ENT_DFU, ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5, AG_NORM, AG_NORM, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
     _______, DEL_ID1, DEL_ID2, DEL_ID3, DEL_ID4, DEL_ID5, AG_SWAP, AG_SWAP, QWERTY,  COLEMAK, DVORAK,  EUCALYN, XXXXXXX, _______,
-    _______, BLE_DIS, BLE_EN,  USB_DIS, USB_EN,  AD_WO_L, BATT_LV, XXXXXXX, AU_ON,   AU_OFF,  XXXXXXX, XXXXXXX, XXXXXXX, _______,
+    _______, SEL_BLE, SEL_USB, XXXXXXX, XXXXXXX, AD_WO_L, BATT_LV, XXXXXXX, AU_ON,   AU_OFF,  XXXXXXX, XXXXXXX, XXXXXXX, _______,
     _______,          _______, _______, _______, _______,                   _______, XXXXXXX, _______, _______,          _______
     ),
 };
 
-static uint16_t layer_pressed_time[_LAYERSIZE];
+struct layer_press {
+  bool pressed;
+  uint16_t time;
+};
+static struct layer_press layer_pressed[_LAYERSIZE];
 
-#ifdef TAPPING_TERM_PER_KEY
-#define TAP_TIME(kc)	(get_tapping_term(kc))
-#else
-#define TAP_TIME(kc)	(TAPPING_TERM)
+static void set_layer(int layer, keyrecord_t *record);
+static void unset_layer(keyrecord_t *record);
+static void set_layer_and_key(int layer, uint16_t kc, keyrecord_t *record);
+static bool process_record_user_special(uint16_t keycode, bool pressed);
+
+#ifndef TAPPING_TERM_PER_KEY
+#define get_tapping_term(kc)	(TAPPING_TERM)
 #endif
-
-static void set_layer_and_key(int layer, uint16_t kc, keyrecord_t *record) {
-  if (record->event.pressed) {
-    layer_pressed_time[layer] = record->event.time;
-    layer_on(layer);
-    update_tri_layer(_LOWER, _RAISE, _ADJUST);
-  } else {
-    layer_off(layer);
-    update_tri_layer(_LOWER, _RAISE, _ADJUST);
-    if (layer_pressed_time[layer] && 
-	(TIMER_DIFF_16(record->event.time, layer_pressed_time[layer]) < TAP_TIME(kc))) {
-      switch (kc) {
-      case KANA:
-	if (!keymap_config.swap_lalt_lgui){
-	  register_code(KC_LANG1);
-	  unregister_code(KC_LANG1);
-	} else {
-	  SEND_STRING(SS_LALT("`"));
-	}
-	break;
-      case EISU:
-	if (!keymap_config.swap_lalt_lgui){
-	  register_code(KC_LANG2);
-	  unregister_code(KC_LANG2);
-	} else {
-	  SEND_STRING(SS_LALT("`"));
-	}
-	break;
-      default:
-	register_code(kc);
-	unregister_code(kc);
-	break;
-      }
-    }
-    layer_pressed_time[layer] = 0;
-  }
-}
 
 static void set_layer(int layer, keyrecord_t *record) {
   if (record->event.pressed) {
-    layer_pressed_time[layer] = record->event.time;
+    layer_pressed[layer].time = record->event.time;
+    layer_pressed[layer].pressed = true;
     layer_on(layer);
     update_tri_layer(_LOWER, _RAISE, _ADJUST);
   } else {
     layer_off(layer);
     update_tri_layer(_LOWER, _RAISE, _ADJUST);
-    layer_pressed_time[layer] = 0;
+    layer_pressed[layer].pressed = false;
   }
 }
 
 static void unset_layer(keyrecord_t *record) {
   if (record->event.pressed) {
-    memset(layer_pressed_time, 0, sizeof(layer_pressed_time));
+    memset(layer_pressed, 0, sizeof(layer_pressed));
   }
 }
 
-void persistent_default_layer_set(uint16_t default_layer) {
-  eeconfig_update_default_layer(default_layer);
-  default_layer_set(default_layer);
-  layer_state_set(default_layer);
+static void set_layer_and_key(int layer, uint16_t kc, keyrecord_t *record) {
+  if (record->event.pressed) {
+    layer_pressed[layer].time = record->event.time;
+    layer_pressed[layer].pressed = true;
+    layer_on(layer);
+    update_tri_layer(_LOWER, _RAISE, _ADJUST);
+  } else {
+    layer_off(layer);
+    update_tri_layer(_LOWER, _RAISE, _ADJUST);
+    if (layer_pressed[layer].pressed && 
+	(TIMER_DIFF_16(record->event.time, layer_pressed[layer].time) < get_tapping_term(kc))) {
+      if (process_record_user_special(kc, true))
+	register_code(kc);
+      if (process_record_user_special(kc, false))
+	unregister_code(kc);
+    }
+    layer_pressed[layer].pressed = false;
+  }
 }
 
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+static bool process_record_user_special(uint16_t keycode, bool pressed) {
   switch (keycode) {
-    // layer function
-  case LOWER:
-    set_layer(_LOWER, record);
-    return false;
-  case RAISE:
-    set_layer(_RAISE, record);
-    return false;
-  case ADJUST:
-    set_layer(_ADJUST, record);
-    return false;
-  case CONFIG:
-    set_layer(_CONFIG, record);
-    return false;
-
-    // combine keycode and layer key
-  case RAISE_SPC:
-    set_layer_and_key(_RAISE, KC_SPC, record);
-    return false;
-  case LOWER_SPC:
-    set_layer_and_key(_LOWER, KC_SPC, record);
-    return false;
-  case RAISE_ENT:
-    set_layer_and_key(_RAISE, KC_ENT, record);
-    return false;
-  case LOWER_ENT:
-    set_layer_and_key(_LOWER, KC_ENT, record);
-    return false;
-  case CONFIG_EISU:
-    set_layer_and_key(_CONFIG, EISU, record);
-    return false;
-  case CONFIG_KANA:
-    set_layer_and_key(_CONFIG, KANA, record);
-    return false;
-
-    // special function key
   case QWERTY:
-    if (record->event.pressed) {
+    if (pressed) {
 #ifdef AUDIO_ENABLE
       PLAY_SONG(tone_qwerty);
 #endif
-      persistent_default_layer_set(1UL<<_QWERTY);
+      set_single_persistent_default_layer(_QWERTY);
     }
     break;
   case COLEMAK:
-    if (record->event.pressed) {
+    if (pressed) {
 #ifdef AUDIO_ENABLE
       PLAY_SONG(tone_colemak);
 #endif
-      persistent_default_layer_set(1UL<<_COLEMAK);
+      set_single_persistent_default_layer(_COLEMAK);
     }
     break;
   case DVORAK:
-    if (record->event.pressed) {
+    if (pressed) {
 #ifdef AUDIO_ENABLE
       PLAY_SONG(tone_dvorak);
 #endif
-      persistent_default_layer_set(1UL<<_DVORAK);
+      set_single_persistent_default_layer(_DVORAK);
     }
     break;
   case EUCALYN:
-    if (record->event.pressed) {
+    if (pressed) {
 #ifdef AUDIO_ENABLE
       PLAY_SONG(tone_dvorak);
 #endif
-      persistent_default_layer_set(1UL<<_EUCALYN);
+      set_single_persistent_default_layer(_EUCALYN);
     }
     break;
   case EISU:
-    if (record->event.pressed) {
+    if (pressed) {
       if (!keymap_config.swap_lalt_lgui){
 	register_code(KC_LANG2);
       } else {
@@ -389,7 +338,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     break;
   case KANA:
-    if (record->event.pressed) {
+    if (pressed) {
       if (!keymap_config.swap_lalt_lgui){
 	register_code(KC_LANG1);
       } else {
@@ -400,22 +349,36 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     break;
   case DELBNDS:
-    if (record->event.pressed)
+    if (pressed)
       delete_bonds();
     break;
   case AD_WO_L:
-    if (record->event.pressed)
+    if (pressed)
       restart_advertising_wo_whitelist();
     break;
-  case USB_EN:
-  case USB_DIS:
-    if (record->event.pressed)
-      set_usb_enabled(keycode == USB_EN);
+  case SEL_BLE:
+    if (pressed) {
+      set_ble_enabled(true);
+      set_usb_enabled(false);
+    }
     break;
-  case BLE_EN:
-  case BLE_DIS:
-    if (record->event.pressed)
-      set_ble_enabled(keycode == BLE_EN);
+  case SEL_USB:
+    if (pressed) {
+      set_ble_enabled(false);
+      set_usb_enabled(true);
+    }
+    break;
+  case TOG_HID:
+#ifndef NRF_SEPARATE_KEYBOARD_SLAVE
+    // workaround:
+    // get_ble_enabled() macro(in app_ble_func.h) is incorrect.
+    if (pressed) {
+      bool ble = get_ble_enabled();
+      
+      set_ble_enabled(!ble);
+      set_usb_enabled(ble);
+    }
+#endif
     break;
   case ADV_ID0:
   case ADV_ID1:
@@ -423,7 +386,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case ADV_ID3:
   case ADV_ID4:
   case ADV_ID5:
-    if (record->event.pressed)
+    if (pressed)
       restart_advertising_id(keycode-ADV_ID0);
     break;
   case DEL_ID0:
@@ -432,11 +395,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case DEL_ID3:
   case DEL_ID4:
   case DEL_ID5:
-    if (record->event.pressed)
+    if (pressed)
       delete_bond_id(keycode-DEL_ID0);
     break;
   case BATT_LV:
-    if (record->event.pressed) {
+    if (pressed) {
       char str[16];
 
       sprintf(str, "%4dmV", get_vcc());
@@ -444,28 +407,60 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     break;
   case ENT_DFU:
-    if (record->event.pressed)
+    if (pressed)
       bootloader_jump();
     break;
   case ENT_SLP:
-    if (!record->event.pressed)
+    if (!pressed)
       sleep_mode_enter();
     break;
 
-    // and... default
   default:
-    unset_layer(record);
+    // other unspecial keys
     return true;
   }
-  unset_layer(record);
   return false;
 }
-
-#ifdef TAPPING_TERM_PER_KEY
-uint16_t get_tapping_term(uint16_t keycode) {
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
+    // layer function
+  case LOWER:
+    set_layer(_LOWER, record);
+    break;
+  case RAISE:
+    set_layer(_RAISE, record);
+    break;
+  case ADJUST:
+    set_layer(_ADJUST, record);
+    break;
+  case CONFIG:
+    set_layer(_CONFIG, record);
+    break;
+
+    // combine keycode and layer key
+  case RAISE_SPC:
+    set_layer_and_key(_RAISE, KC_SPC, record);
+    break;
+  case LOWER_SPC:
+    set_layer_and_key(_LOWER, KC_SPC, record);
+    break;
+  case RAISE_ENT:
+    set_layer_and_key(_RAISE, KC_ENT, record);
+    break;
+  case LOWER_ENT:
+    set_layer_and_key(_LOWER, KC_ENT, record);
+    break;
+  case CONFIG_EISU:
+    set_layer_and_key(_CONFIG, EISU, record);
+    break;
+  case CONFIG_KANA:
+    set_layer_and_key(_CONFIG, KANA, record);
+    break;
+
+    // special function key
   default:
-    return TAPPING_TERM;
+    unset_layer(record);
+    return process_record_user_special(keycode, record->event.pressed);
   }
+  return false;
 }
-#endif
