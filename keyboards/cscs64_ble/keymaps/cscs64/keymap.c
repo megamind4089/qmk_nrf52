@@ -93,8 +93,8 @@ enum layer_number {
 #define KC_RAEN   RAISE_ENT
 #define KC_LOEN   LOWER_ENT
 #define KC_RCEN   RCTL_T(KC_ENT)
-#define KC_MAC    AG_NORM
-#define KC_WIN    AG_SWAP
+#define KC_MAC    AG_SWAP
+#define KC_WIN    AG_NORM
 #define KC_SLP	  ENT_SLP
 
 #define KC_xEISU  EISU
@@ -115,7 +115,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
    * | Shift|   Z  |   X  |   C  |   V  |   B  |   `  |   '  |   N  |   M  |   ,  |   .  |   /  | Shift|
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
-   * |Lower |      |  Alt |  GUI | kana | Space|             | Enter|  BS  | GUI  | Alt  |      |Raise |
+   * |Lower |      |  GUI |  Alt | kana | Space|             | Enter|  BS  | Alt  | GUI  |      |Raise |
    * `------+      +---------------------------+             +---------------------------+      +------'
    */
   [_QWERTY] = LAYOUT_kc(
@@ -123,7 +123,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     TAB,     Q,    W,    E,    R,    T, MINS,  EQL,    Y,    U,    I,    O,    P, BSLS,
     LCTL,    A,    S,    D,    F,    G, LBRC, RBRC,    H,    J,    K,    L, SCLN, RCEN,
     LSFT,    Z,    X,    C,    V,    B,  GRV, QUOT,    N,    M, COMM,  DOT, SLSH, RSFT,
-    LOWER,      LALT, LGUI,cKANA, LOSP,             RAEN, BSPC, RGUI, RALT,      RAISE
+    LOWER,      LGUI, LALT,cKANA, LOSP,             RAEN, BSPC, RALT, RGUI,      RAISE
     ),
 
   /* Colemak
@@ -136,7 +136,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
    * | Shift|   Z  |   X  |   C  |   V  |   B  |   `  |   '  |   K  |   M  |   ,  |   .  |   /  | Shift|
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
-   * |Lower |      |  Alt |  GUI | kana | Space|             | Enter|  BS  | GUI  | Alt  |      |Raise |
+   * |Lower |      |  GUI |  Alt | kana | Space|             | Enter|  BS  | Alt  | GUI  |      |Raise |
    * `------+      +---------------------------+             +---------------------------+      +------'
    */
   [_COLEMAK] = LAYOUT_kc(
@@ -144,7 +144,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     TAB,     Q,    W,    F,    P,    G, MINS,  EQL,    J,    L,    U,    Y, SCLN, BSLS,
     LCTL,    A,    R,    S,    T,    D, LBRC, RBRC,    H,    N,    E,    I,    O, RCEN,
     LSFT,    Z,    X,    C,    V,    B,  GRV, QUOT,    K,    M, COMM,  DOT, SLSH, RSFT,
-    LOWER,      LALT, LGUI,cKANA, LOSP,             RAEN, BSPC, RGUI, RALT,      RAISE
+    LOWER,      LGUI, LALT,cKANA, LOSP,             RAEN, BSPC, RALT, RGUI,      RAISE
     ),
 
   /* Dvorak
@@ -157,7 +157,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
    * | Shift|   ;  |   Q  |   J  |   K  |   X  |   `  |   /  |   B  |   M  |   W  |   V  |   Z  | Shift|
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
-   * |Lower |      |  Alt |  GUI | kana | Space|             | Enter|  BS  | GUI  | Alt  |      |Raise |
+   * |Lower |      |  GUI |  Alt | kana | Space|             | Enter|  BS  | Alt  | GUI  |      |Raise |
    * `------+      +---------------------------+             +---------------------------+      +------'
    */
   [_DVORAK] = LAYOUT_kc(
@@ -165,7 +165,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     TAB,  QUOT, COMM,  DOT,    P,    Y, MINS,  EQL,    F,    G,    C,    R,    L, BSLS,
     LCTL,    A,    O,    E,    U,    I, LBRC, RBRC,    D,    H,    T,    N,    S, RCEN,
     LSFT, SCLN,    Q,    J,    K,    X,  GRV, SLSH,    B,    M,    W,    V,    Z, RSFT,
-    LOWER,      LALT, LGUI,cKANA, LOSP,             RAEN, BSPC, RGUI, RALT,      RAISE
+    LOWER,      LGUI, LALT,cKANA, LOSP,             RAEN, BSPC, RALT, RGUI,      RAISE
     ),
 
   /* Eucalyn (http://eucalyn.hatenadiary.jp/entry/about-eucalyn-layout)
@@ -178,7 +178,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
    * | Shift|   Z  |   X  |   C  |   V  |   F  |   `  |   '  |   B  |   H  |   J  |   L  |   /  | Shift|
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
-   * |Lower |      |  Alt |  GUI | kana | Space|             | Enter|  BS  | GUI  | Alt  |      |Raise |
+   * |Lower |      |  GUI |  Alt | kana | Space|             | Enter|  BS  | Alt  | GUI  |      |Raise |
    * `------+      +---------------------------+             +---------------------------+      +------'
    */
   [_EUCALYN] = LAYOUT_kc(
@@ -186,7 +186,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     TAB,     Q,    W, COMM,  DOT, SCLN, MINS,  EQL,    M,    R,    D,    Y,    P, BSLS,
     LCTL,    A,    O,    E,    I,    U, LBRC, RBRC,    G,    T,    K,    S,    N, RCEN,
     LSFT,    Z,    X,    C,    V,    F,  GRV, QUOT,    B,    H,    J,    L, SLSH, RSFT,
-    LOWER,      LALT, LGUI,cKANA, LOSP,             RAEN, BSPC, RGUI, RALT,      RAISE
+    LOWER,      LGUI, LALT,cKANA, LOSP,             RAEN, BSPC, RALT, RGUI,      RAISE
     ),
 
   /* Raise/Lower
@@ -255,8 +255,8 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    */
   [_CONFIG] =  LAYOUT(
     RESET,   ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5,                   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    ENT_DFU, ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5, AG_NORM, AG_NORM, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    _______, DEL_ID1, DEL_ID2, DEL_ID3, DEL_ID4, DEL_ID5, AG_SWAP, AG_SWAP, QWERTY,  COLEMAK, DVORAK,  EUCALYN, XXXXXXX, _______,
+    ENT_DFU, ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5, AG_SWAP, AG_SWAP, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+    _______, DEL_ID1, DEL_ID2, DEL_ID3, DEL_ID4, DEL_ID5, AG_NORM, AG_NORM, QWERTY,  COLEMAK, DVORAK,  EUCALYN, XXXXXXX, _______,
     _______, SEL_BLE, SEL_USB, XXXXXXX, XXXXXXX, AD_WO_L, BATT_LV, XXXXXXX, AU_ON,   AU_OFF,  XXXXXXX, XXXXXXX, XXXXXXX, _______,
     _______,          _______, _______, _______, _______,                   _______, XXXXXXX, _______, _______,          _______
     ),
@@ -352,7 +352,7 @@ static bool process_record_user_special(uint16_t keycode, bool pressed) {
     break;
   case EISU:
     if (pressed) {
-      if (!keymap_config.swap_lalt_lgui){
+      if (keymap_config.swap_lalt_lgui){
 	register_code(KC_LANG2);
       } else {
 	SEND_STRING(SS_LALT("`"));
@@ -363,7 +363,7 @@ static bool process_record_user_special(uint16_t keycode, bool pressed) {
     break;
   case KANA:
     if (pressed) {
-      if (!keymap_config.swap_lalt_lgui){
+      if (keymap_config.swap_lalt_lgui){
 	register_code(KC_LANG1);
       } else {
 	SEND_STRING(SS_LALT("`"));
