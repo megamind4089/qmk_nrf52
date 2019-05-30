@@ -242,11 +242,11 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   /* Config
    * ,-----------------------------------------.             ,-----------------------------------------.
-   * |RESET | ADV1 | ADV2 | ADV3 | ADV4 | ADV5 |             |      |      |      |      |      |      |
+   * |RESET | ADV1 | ADV2 | ADV3 | ADV4 | ADV5 |             | DEL1 | DEL2 | DEL3 | DEL4 | DEL5 |      |
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
-   * | DFU  | ADV1 | ADV2 | ADV3 | ADV4 | ADV5 | MAC  | MAC  |      |      |      |      |      |      |
+   * | DFU  |      |      |      |      |      | MAC  | MAC  |      |      |      |      |      |      |
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
-   * |      | DEL1 | DEL2 | DEL3 | DEL4 | DEL5 | WIN  | WIN  |QWERTY|COLEMK|DVORAK|EUCLYN|      |      |
+   * |      |      |      |      |      | WIN  | WIN  |QWERTY|COLEMK|DVORAK|EUCLYN|      |      |
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
    * |      |SELBLE|SELUSB|      |      | ADV  | BATT |      |AU_ON |AU_OFF|      |      |      |      |
    * |------+------+------+------+------+------+------+------+------+------+------+------+------+------|
@@ -254,9 +254,9 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * `------+      +---------------------------+             +---------------------------+      +------'
    */
   [_CONFIG] =  LAYOUT(
-    RESET,   ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5,                   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    ENT_DFU, ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5, AG_SWAP, AG_SWAP, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    _______, DEL_ID1, DEL_ID2, DEL_ID3, DEL_ID4, DEL_ID5, AG_NORM, AG_NORM, QWERTY,  COLEMAK, DVORAK,  EUCALYN, XXXXXXX, _______,
+    RESET,   ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5,                   DEL_ID1, DEL_ID2, DEL_ID3, DEL_ID4, DEL_ID5, XXXXXXX,
+    ENT_DFU, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, AG_SWAP, AG_SWAP, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+    _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, AG_NORM, AG_NORM, QWERTY,  COLEMAK, DVORAK,  EUCALYN, XXXXXXX, _______,
     _______, SEL_BLE, SEL_USB, XXXXXXX, XXXXXXX, AD_WO_L, BATT_LV, XXXXXXX, AU_ON,   AU_OFF,  XXXXXXX, XXXXXXX, XXXXXXX, _______,
     _______,          _______, _______, _______, _______,                   _______, XXXXXXX, _______, _______,          _______
     ),
