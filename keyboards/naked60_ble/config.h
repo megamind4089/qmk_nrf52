@@ -51,6 +51,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     keyboard_report->mods == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_RSHIFT)) \
 )
 
+#define TAPPING_TERM 200
+#define PREVENT_STUCK_MODIFIERS
+#define IGNORE_MOD_TAP_INTERRUPT
+
+#define MK_3_SPEED
+
+#undef MOUSEKEY_INTERVAL
+#define MOUSEKEY_INTERVAL 0
+
+#undef MOUSEKEY_TIME_TO_MAX
+#define MOUSEKEY_TIME_TO_MAX 150
+
+#undef MOUSEKEY_MAX_SPEED
+#define MOUSEKEY_MAX_SPEED 3
+
+#undef MOUSEKEY_MOVE_DELTA
+#define MOUSEKEY_MOVE_DELTA 5
+
+#undef MOUSEKEY_DELAY
+#define MOUSEKEY_DELAY 0
+
+#undef MOUSEKEY_WHEEL_MAX_SPEED
+#define MOUSEKEY_WHEEL_MAX_SPEED 1
+
+#undef MOUSEKEY_WHEEL_TIME_TO_MAX
+#define MOUSEKEY_WHEEL_TIME_TO_MAX 0
+
 //#define RGBLIGHT_ANIMATIONS
 //#define RGB_DI_PIN 8     // The pin the LED strip is connected to
 //#define RGBLED_NUM 5     // Number of LEDs in your strip
