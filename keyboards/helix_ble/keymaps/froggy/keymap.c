@@ -152,11 +152,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * `-------------------------------------------------------------------------------------------------'
    */
   [_FUNC] = LAYOUT( \
-      RGBRST,RGB_HUI, _______, RESET,   MAC,     WIN,                         _______,  _______,  _______,  _______,  _______,  _______, \
+      RGBRST,RGB_HUI, ENT_DFU, RESET,   MAC,     WIN,                         _______,  _______,  _______,  _______,  _______,  _______, \
       RGB1,  RGB_VAI, KC_F7,   KC_F8,   KC_F9,   _______,                     _______,  _______,  _______,  _______,  _______,  _______, \
       RGB2,  RGB_VAD, KC_F4,   KC_F5,   KC_F6,   KC_F12,                      _______,  _______,  _______,  _______,  _______,  _______, \
       RGB3,  KC_F10,  KC_F1,   KC_F2,   KC_F3,   KC_F11,   _______,  _______, _______,  _______,  _______,  _______,  _______,  _______, \
-      RGBOFF,AD_WO_L, _______, _______, _______, _______,  _______,  _______, _______,  _______,  _______,  _______,  _______,  _______ \
+      RGBOFF,AD_WO_L, BLE_DIS, BLE_EN,  _______, _______,  DELBNDS,  _______, _______,  _______,  _______,  _______,  _______,  _______ \
       ),
 
   /* Sym
@@ -302,7 +302,8 @@ struct keybuf {
   char col, row;
   char frame;
 };
-struct keybuf keybufs[256];
+#define LED_KEY_BUFF 8
+struct keybuf keybufs[LED_KEY_BUFF];
 unsigned char keybuf_begin, keybuf_end;
 
 int col, row;
@@ -318,7 +319,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       keybufs[end].col = col;
       keybufs[end].row = row % 5;
       keybufs[end].frame = 0;
-      keybuf_end ++;
+      keybuf_end = (keybuf_end + 1) % LED_KEY_BUFF;
     }
   #endif
 
@@ -327,9 +328,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   }
 
   if(keycode==delay_registered_code){
-      if (!record->event.pressed){
-        unregister_delay_code();
-      }
+    if (!record->event.pressed){
+      unregister_delay_code();
+    }
   }
 
   char str[16];
@@ -612,56 +613,57 @@ void music_scale_user(void)
 // LED Effect
 #ifdef RGBLIGHT_ENABLE
 unsigned char rgb[7][5][3];
+#define LED_LIPPLE_DELAY 0
+
 void led_ripple_effect(char r, char g, char b) {
     static int scan_count = -10;
-    static int keys[] = { 6, 6, 6, 7, 7 };
-    static int keys_sum[] = { 0, 6, 12, 18, 25 };
+    static const int keys[] = { 6, 6, 6, 7, 7 };        //行ごとのキー数
+    static const int keys_sum[] = { 0, 6, 12, 18, 25 }; //その行までのキーの合計
 
     if (scan_count == -1) {
       rgblight_enable_noeeprom();
       rgblight_mode(1);
-    } else if (scan_count >= 0 && scan_count < 5) {
-      for (unsigned char c=keybuf_begin; c!=keybuf_end; c++) {
-        int i = c;
-        // FIXME:
+    } else if (scan_count == 0) {
+      // LEDバッファの生成
+      memset(rgb, 0, sizeof(rgb));
 
-        int y = scan_count;
-        int dist_y = abs(y - keybufs[i].row);
-        for (int x=0; x<keys[y]; x++) {
-          int dist = abs(x - keybufs[i].col) + dist_y;
-          if (dist <= keybufs[i].frame) {
-            int elevation = MAX(0, (8 + dist - keybufs[i].frame)) << 2;
-            if (elevation) {
-              if ((rgb[x][y][0] != 255) && r) { rgb[x][y][0] = MIN(255, elevation + rgb[x][y][0]); }
-              if ((rgb[x][y][1] != 255) && g) { rgb[x][y][1] = MIN(255, elevation + rgb[x][y][1]); }
-              if ((rgb[x][y][2] != 255) && b) { rgb[x][y][2] = MIN(255, elevation + rgb[x][y][2]); }
+      for (unsigned char c=keybuf_begin; c!=keybuf_end; c=(c+1)%LED_KEY_BUFF ) {
+        int i = c ;
+        
+        for (int y = 0; y < HELIX_ROWS; y++){
+          int dist_y = abs(y - keybufs[i].row);
+          for (int x=0; x<keys[y]; x++) {
+            int dist = abs(x - keybufs[i].col) + dist_y;
+            if (dist <= keybufs[i].frame) {
+              int elevation = MAX(0, (8 + dist - keybufs[i].frame)) << 2;
+              if (elevation) {
+                if ((rgb[x][y][0] != 255) && r) { rgb[x][y][0] = MIN(255, elevation + rgb[x][y][0]); }
+                if ((rgb[x][y][1] != 255) && g) { rgb[x][y][1] = MIN(255, elevation + rgb[x][y][1]); }
+                if ((rgb[x][y][2] != 255) && b) { rgb[x][y][2] = MIN(255, elevation + rgb[x][y][2]); }
+              }
             }
           }
         }
-      }
-    } else if (scan_count == 5) {
-      for (unsigned char c=keybuf_begin; c!=keybuf_end; c++) {
-        int i = c;
-        if (keybufs[i].frame < 18) {
+        if (keybufs[i].frame < 9) {
           keybufs[i].frame ++;
         } else {
-          keybuf_begin ++;
+          keybuf_begin = (keybuf_begin + 1) % LED_KEY_BUFF;
         }
       }
-    } else if (scan_count >= 6 && scan_count <= 10) {
-      int y = scan_count - 6;
-      for (int x=0; x<keys[y]; x++) {
-        int at = keys_sum[y] + ((y & 1) ? x : (keys[y] - x - 1));
-        led[at].r = rgb[x][y][0];
-        led[at].g = rgb[x][y][1];
-        led[at].b = rgb[x][y][2];
+    } else if (scan_count == 1) {
+      // LEDの更新
+      for (int y=0; y<HELIX_ROWS; y++) {
+        for (int x=0; x<keys[y]; x++) {
+          int at = keys_sum[y] + ((y & 1) ? x : (keys[y] - x - 1));
+          led[at].r = rgb[x][y][0];
+          led[at].g = rgb[x][y][1];
+          led[at].b = rgb[x][y][2];
+        }
       }
       rgblight_set();
-    } else if (scan_count == 11) {
-      memset(rgb, 0, sizeof(rgb));
     }
     scan_count++;
-    if (scan_count >= 12) { scan_count = 0; }
+    if (scan_count >= 2 + LED_LIPPLE_DELAY) { scan_count = 0; }
 }
 #endif
 
@@ -841,7 +843,6 @@ void render_status(struct CharacterMatrix *matrix) {
 #if 1
 void iota_gfx_task_user(void) {
   struct CharacterMatrix matrix;
-
 #if DEBUG_TO_SCREEN
   if (debug_enable) {
     return;
