@@ -302,7 +302,7 @@ struct keybuf {
   char col, row;
   char frame;
 };
-#define LED_KEY_BUFF 8
+#define LED_KEY_BUFF 16
 struct keybuf keybufs[LED_KEY_BUFF];
 unsigned char keybuf_begin, keybuf_end;
 
@@ -556,22 +556,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 ;
 
-#if 1
-//keyboard start-up code. Runs once when the firmware starts up.
-void matrix_init_user_child(void) {
-    #ifdef AUDIO_ENABLE
-        startup_user();
-    #endif
-    #ifdef RGBLIGHT_ENABLE
-      RGB_current_mode = rgblight_config.mode;
-    #endif
-    //SSD1306 OLED init, make sure to add #define SSD1306OLED in config.h
-    #ifdef SSD1306OLED
-        iota_gfx_init(!IS_LEFT_HAND);   // turns on the display
-    #endif
-}
-#endif
-
 #ifdef AUDIO_ENABLE
 
 void startup_user()
@@ -613,18 +597,19 @@ void music_scale_user(void)
 // LED Effect
 #ifdef RGBLIGHT_ENABLE
 unsigned char rgb[7][5][3];
-#define LED_LIPPLE_DELAY 0
+
+#define LED_RIPPLE_DELAY 0 // increase the number, slows down lipple.
 
 void led_ripple_effect(char r, char g, char b) {
     static int scan_count = -10;
-    static const int keys[] = { 6, 6, 6, 7, 7 };        //行ごとのキー数
-    static const int keys_sum[] = { 0, 6, 12, 18, 25 }; //その行までのキーの合計
+    static const int keys[] = { 6, 6, 6, 7, 7 };        //Number of keys in each row.
+    static const int keys_sum[] = { 0, 6, 12, 18, 25 }; //Total number of keys to the beginning of each row.
 
     if (scan_count == -1) {
       rgblight_enable_noeeprom();
       rgblight_mode(1);
     } else if (scan_count == 0) {
-      // LEDバッファの生成
+      // Create lipple effect
       memset(rgb, 0, sizeof(rgb));
 
       for (unsigned char c=keybuf_begin; c!=keybuf_end; c=(c+1)%LED_KEY_BUFF ) {
@@ -644,14 +629,14 @@ void led_ripple_effect(char r, char g, char b) {
             }
           }
         }
-        if (keybufs[i].frame < 9) {
+        if (keybufs[i].frame < 18) {
           keybufs[i].frame ++;
         } else {
           keybuf_begin = (keybuf_begin + 1) % LED_KEY_BUFF;
         }
       }
     } else if (scan_count == 1) {
-      // LEDの更新
+      // Update LEDs.
       for (int y=0; y<HELIX_ROWS; y++) {
         for (int x=0; x<keys[y]; x++) {
           int at = keys_sum[y] + ((y & 1) ? x : (keys[y] - x - 1));
@@ -663,7 +648,7 @@ void led_ripple_effect(char r, char g, char b) {
       rgblight_set();
     }
     scan_count++;
-    if (scan_count >= 2 + LED_LIPPLE_DELAY) { scan_count = 0; }
+    if (scan_count >= 2 + LED_RIPPLE_DELAY) { scan_count = 0; }
 }
 #endif
 
