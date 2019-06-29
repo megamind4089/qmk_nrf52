@@ -44,9 +44,8 @@ uint8_t oled_buff[512];
 // Returns true on success.
 static inline bool _send_cmd1(uint8_t cmd) {
   bool res = false;
-  uint8_t data[2] = {0x00, cmd};
-  res = i2c_transmit(SSD1306_ADDRESS, data, sizeof(data));
-  res = true;
+  uint8_t data[] = {0x00, cmd};
+  res = !i2c_transmit(SSD1306_ADDRESS, data, sizeof(data)/sizeof(data[0]));
 
   return res;
 }
@@ -54,22 +53,21 @@ static inline bool _send_cmd1(uint8_t cmd) {
 // Write 2-byte command sequence.
 // Returns true on success
 static inline bool _send_cmd2(uint8_t cmd, uint8_t opr) {
-  if (!_send_cmd1(cmd)) {
-    return false;
-  }
-  return _send_cmd1(opr);
+  bool res = false;
+  uint8_t data[] = {0x00, cmd, opr};
+  res = !i2c_transmit(SSD1306_ADDRESS, data, sizeof(data)/sizeof(data[0]));
+
+  return res;
 }
 
 // Write 3-byte command sequence.
 // Returns true on success
 static inline bool _send_cmd3(uint8_t cmd, uint8_t opr1, uint8_t opr2) {
-  if (!_send_cmd1(cmd)) {
-    return false;
-  }
-  if (!_send_cmd1(opr1)) {
-    return false;
-  }
-  return _send_cmd1(opr2);
+  bool res = false;
+  uint8_t data[] = {0x00, cmd, opr1, opr2};
+  res = !i2c_transmit(SSD1306_ADDRESS, data, sizeof(data)/sizeof(data[0]));
+
+  return res;
 }
 
 #define send_cmd1(c) if (!_send_cmd1(c)) {goto done;}
@@ -258,6 +256,7 @@ void matrix_render(struct CharacterMatrix *matrix) {
   // Move to the home position
   send_cmd3(PageAddr, 0, MatrixRows - 1);
   send_cmd3(ColumnAddr, 0, (MatrixCols * FontWidth) - 1);
+
   memset(oled_buff, 0x00, sizeof(oled_buff));
   oled_buff[0] = 0x40;
   uint16_t idx = 1;
