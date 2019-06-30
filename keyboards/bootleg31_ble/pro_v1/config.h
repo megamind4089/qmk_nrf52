@@ -1,0 +1,14 @@
+#ifndef MASTER_CONFIG_H_
+#define MASTER_CONFIG_H_
+
+#include "custom_board.h"
+
+#define THIS_DEVICE_ROWS 3
+#define THIS_DEVICE_COLS 11
+
+#define MATRIX_ROW_PINS { PIN15, PIN11, PIN14 }
+#define MATRIX_COL_PINS { PIN5, PIN20, PIN6, PIN19, PIN7, PIN18, PIN8, PIN17, PIN9, PIN16, PIN10 }
+#define IS_LEFT_HAND  true
+#define ENABLE_STARTUP_ADV_NOLIST
+
+#endif /* MASTER_CONFIG_H_ */
