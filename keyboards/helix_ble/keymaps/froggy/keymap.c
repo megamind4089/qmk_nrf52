@@ -443,6 +443,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       #ifdef RGBLIGHT_ENABLE
         if (record->event.pressed) {
           RGBAnimation = true;
+          eeconfig_update_rgblight_default();
+          rgblight_enable();
           rgblight_mode(6);
           RGB_current_mode = rgblight_config.mode;
         }
@@ -452,6 +454,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       #ifdef RGBLIGHT_ENABLE
         if (record->event.pressed) {
           RGBAnimation = true;
+          eeconfig_update_rgblight_default();
+          rgblight_enable();
           rgblight_mode(9 + 1);
           RGB_current_mode = rgblight_config.mode;
         }
@@ -461,6 +465,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       #ifdef RGBLIGHT_ENABLE
         if (record->event.pressed) {
           RGBAnimation = true;
+          eeconfig_update_rgblight_default();
+          rgblight_enable();
           rgblight_mode(21);
           RGB_current_mode = rgblight_config.mode;
         }
@@ -607,14 +613,13 @@ void led_ripple_effect(char r, char g, char b) {
 
     if (scan_count == -1) {
       rgblight_enable_noeeprom();
-      rgblight_mode(1);
+      rgblight_mode(0);
     } else if (scan_count == 0) {
       // Create lipple effect
       memset(rgb, 0, sizeof(rgb));
 
       for (unsigned char c=keybuf_begin; c!=keybuf_end; c=(c+1)%LED_KEY_BUFF ) {
         int i = c ;
-        
         for (int y = 0; y < HELIX_ROWS; y++){
           int dist_y = abs(y - keybufs[i].row);
           for (int x=0; x<keys[y]; x++) {
