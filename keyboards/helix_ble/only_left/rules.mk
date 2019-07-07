@@ -8,5 +8,5 @@ NRFSDK_ROOT := $(NRFSDK15_ROOT) #Path to nRF SDK v15.0.0
 #SRC =	matrix.c
 SRC += ssd1306.c
 
-NRF_SEPARATE = master
+#NRF_SEPARATE = master
 #CFLAGS += -DNRF_XTAL_32MHZ
