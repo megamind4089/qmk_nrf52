@@ -38,7 +38,7 @@ static uint16_t last_flush;
 
 static bool force_dirty = true;
 
-uint8_t oled_buff[512];
+uint8_t oled_buff[1 + MatrixRows * DisplayWidth];
 
 // Write command sequence.
 // Returns true on success.
