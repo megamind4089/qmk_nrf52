@@ -77,6 +77,7 @@
 #include "nrf_log_default_backends.h"
 
 #include "ble_central.h"
+#include "ble_dongle.h"
 #include "adc.h"
 #include "ble_common.h"
 
@@ -967,7 +968,7 @@ static void ble_evt_dispatch(ble_evt_t const * p_ble_evt, void * p_context) {
     on_ble_peripheral_evt(p_ble_evt);
   } else if ((role == BLE_GAP_ROLE_CENTRAL)
       || (p_ble_evt->header.evt_id == BLE_GAP_EVT_ADV_REPORT)) {
-#ifdef NRF_SEPARATE_KEYBOARD_MASTER
+#if defined(NRF_SEPARATE_KEYBOARD_MASTER) || defined(NRF_SEPARATE_KEYBOARD_DONGLE)
     on_ble_central_evt(p_ble_evt, conn_handle);
 #endif
   }
@@ -1240,7 +1241,7 @@ void restart_advertising_wo_whitelist() {
 
   sd_ble_gap_adv_stop(m_advertising.adv_handle);
 
-#ifdef NRF_SEPARATE_KEYBOARD_MASTER
+#if defined(NRF_SEPARATE_KEYBOARD_MASTER)
   scan_start();
 #endif
 

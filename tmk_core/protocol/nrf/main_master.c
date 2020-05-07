@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ble_master.h"
 #include "ble_central.h"
+#include "ble_dongle.h"
 #include "app_ble_func.h"
 #include "usbd.h"
 
@@ -152,6 +153,36 @@ void send_abs_mouse(int8_t x, int8_t y) {
   }
 }
 
+void hids_c_data_handler(uint8_t const *dat, uint16_t len, uint16_t conn_handle,
+                       uint16_t report_idx) {
+  switch(report_idx) {
+    case 0:
+      if (len == sizeof(report_keyboard_t)) {
+        usbd_send_keyboard((report_keyboard_t*)dat);
+      }
+    break;
+    case 1:
+      if (len == sizeof(report_mouse_t)) {
+        usbd_send_mouse((report_mouse_t*)dat);
+      }
+    break;
+    case 2:
+      if (len == 2) {
+        usbd_send_system(*((uint16_t*)dat));
+      }
+    break;
+    case 3:
+      if (len == 2) {
+        usbd_send_consumer(*((uint16_t*)dat));
+      }
+    break;
+    default:
+    break;
+  }
+}
+
+void hids_c_on_disconnect(void) { clear_keyboard_but_mods(); }
+
 /**@brief Function for application main entry.
  */
 int main(void) {
@@ -180,13 +211,19 @@ int main(void) {
   db_discovery_init();
   nus_c_init();
 #endif
+
+#ifdef NRF_SEPARATE_KEYBOARD_DONGLE
+  db_discovery_init();
+  ble_hids_c_init();
+#endif
+
   // Start execution.
-#if defined(ENABLE_STARTUP_ADV_LIST)
+#if defined(ENABLE_STARTUP_ADV_LIST) && !defined(NRF_SEPARATE_KEYBOARD_DONGLE)
   advertising_start();
-#elif defined(ENABLE_STARTUP_ADV_NOLIST)
+#elif defined(ENABLE_STARTUP_ADV_NOLIST) && !defined(NRF_SEPARATE_KEYBOARD_DONGLE)
   restart_advertising_wo_whitelist();
 #endif
-#ifdef NRF_SEPARATE_KEYBOARD_MASTER
+#if defined(NRF_SEPARATE_KEYBOARD_MASTER) || defined(NRF_SEPARATE_KEYBOARD_DONGLE)
   scan_start();
 #endif
   timers_start();

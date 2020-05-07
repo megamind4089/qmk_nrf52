@@ -16,10 +16,13 @@
 #include "bootloader.h"
 #include "app_ble_func.h"
 #include "ble_common.h"
+#include "ble_central.h"
+#include "ble_dongle.h"
 
 void cli_puts(char *str);
 static MSCMD_USER_RESULT usrcmd_reset(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
 static MSCMD_USER_RESULT usrcmd_advertise(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
+static MSCMD_USER_RESULT usrcmd_scan(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
 static MSCMD_USER_RESULT usrcmd_bootloader(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
 static MSCMD_USER_RESULT usrcmd_bonding_information(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
 static MSCMD_USER_RESULT usrcmd_delete_bonding(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
@@ -28,6 +31,7 @@ static MSCMD_USER_RESULT usrcmd_help(MSOPT *msopt, MSCMD_USER_OBJECT usrobj);
 static const MSCMD_COMMAND_TABLE table[] = {
     {   "reset",   usrcmd_reset, "Reset system"   },
     {   "adv",   usrcmd_advertise, "Start advertising"   },
+    {   "scan",   usrcmd_scan, "Start scanning. scan <wl_enable>"   },
     {   "dfu",   usrcmd_bootloader, "Jump to bootloader"   },
     {   "show",   usrcmd_bonding_information, "Show bonded devices"  },
     {   "del",   usrcmd_delete_bonding, "Delete bond information"   },
@@ -56,6 +60,18 @@ static MSCMD_USER_RESULT usrcmd_advertise(MSOPT *msopt, MSCMD_USER_OBJECT usrobj
 #endif
   return 0;
 }
+
+static MSCMD_USER_RESULT usrcmd_scan(MSOPT *msopt, MSCMD_USER_OBJECT usrobj) {
+#ifdef NRF_SEPARATE_KEYBOARD_DONGLE
+  if (msopt->argc >= 2) {
+    scan_start_wo_whitelist();
+  } else {
+    scan_start();
+  }
+#endif
+  return 0;
+}
+
 static MSCMD_USER_RESULT usrcmd_bootloader(MSOPT *msopt, MSCMD_USER_OBJECT usrobj) {
   NRF_LOG_DEBUG("DFU");
   bootloader_jump();

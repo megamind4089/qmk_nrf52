@@ -41,7 +41,7 @@ NRFCFLAGS += -DNRF_SDK_MAJOR_VER=$(NRFSDK_VER)
 NRF_VER_DIR = sdk$(NRFSDK_VER)
 
 ifeq ($(NRF_DEBUG), yes)
-  NRFCFLAGS += -DDEBUG=DEBUG 
+  NRFCFLAGS += -DDEBUG=DEBUG
   NRFCFLAGS += -DNRF_LOG_ENABLED=1
   NRFCFLAGS += -DNRF_LOG_BACKEND_UART_ENABLED=1
   NRFCFLAGS += -DNRF_LOG_DEFAULT_LEVEL=4
@@ -110,7 +110,7 @@ ifeq ($(NRFSDK_VER), 12)
     $(NRFSDK_ROOT)/components/ble/ble_services/ble_nus/ble_nus.c \
     $(NRFSDK_ROOT)/components/softdevice/common/softdevice_handler/softdevice_handler.c \
     $(NRFSDK_ROOT)/components/softdevice/common/softdevice_handler/softdevice_handler_appsh.c \
-    
+
   # Include folders common to all targets
   EXTRAINCDIRS += \
     $(TMK_PATH)/protocol/nrf \
@@ -219,7 +219,7 @@ ifeq ($(NRFSDK_VER), 12)
     $(NRFSDK_ROOT)/components/softdevice/common/softdevice_handler \
     $(NRFSDK_ROOT)/components/ble/ble_services/ble_hrs \
     $(NRFSDK_ROOT)/components/libraries/log/src \
-    
+
   ifeq ($(MCU_FAMILY),NRF51)
     NRFSRC += $(NRFSDK_ROOT)/components/toolchain/gcc/gcc_startup_nrf51.S \
       $(NRFSDK_ROOT)/components/drivers_nrf/adc/nrf_drv_adc.c \
@@ -247,7 +247,7 @@ ifeq ($(NRFSDK_VER), 12)
     NRFCFLAGS += -mfloat-abi=soft
     # keep every function in separate section, this allows linker to discard unused ones
     NRFCFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
-    NRFCFLAGS += -fno-builtin --short-enums 
+    NRFCFLAGS += -fno-builtin --short-enums
 
     # C++ flags common to all targets
     CXXFLAGS += \
@@ -307,7 +307,7 @@ ifeq ($(NRFSDK_VER), 12)
         $(NRFSDK_ROOT)/components/drivers_nrf/usbd \
         $(NRFSDK_ROOT)/components/drivers_nrf/systick \
         $(TOP_DIR)/tmk_core/protocol/nrf/nrf52 \
-    
+
       NRFCFLAGS += -DNRF52840_XXAA
       NRFCFLAGS += -DAPP_USBD_ENABLED=1
       NRFCFLAGS += -DUSBD_ENABLED=1
@@ -341,7 +341,7 @@ ifeq ($(NRFSDK_VER), 12)
       ASFLAGS += -DNRF52_PAN_15
       ASFLAGS += -DNRF52_PAN_20
       ASFLAGS += -DNRF52_PAN_55
-    endif   
+    endif
     # C flags common to all targets
     NRFCFLAGS +=-DADC_ENABLED=0
     NRFCFLAGS +=-DSAADC_ENABLED=1
@@ -360,7 +360,7 @@ ifeq ($(NRFSDK_VER), 12)
     NRFCFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
     # keep every function in separate section, this allows linker to discard unused ones
     NRFCFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
-    NRFCFLAGS += -fno-builtin --short-enums 
+    NRFCFLAGS += -fno-builtin --short-enums
 
     # C++ flags common to all targets
     CXXFLAGS += \
@@ -386,7 +386,7 @@ ifeq ($(NRFSDK_VER), 12)
     LDFLAGS += --specs=nano.specs -lc -lnosys
 endif
 
-  
+
 endif
 
 ifeq ($(NRFSDK_VER), 15)
@@ -480,7 +480,7 @@ NRFSRC +=  $(NRFSDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(NRFSDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
   $(NRFSDK_ROOT)/components/ble/common/ble_conn_params.c \
   $(NRFSDK_ROOT)/components/ble/nrf_ble_gatt/nrf_ble_gatt.c \
-  
+
 endif
 
 ifeq ($(MCU_SERIES), NRF52832)
@@ -662,6 +662,19 @@ ifeq ($(strip $(NRF_SEPARATE)), master)
   EXTNRFCFLAGS += -DPM_CENTRAL_ENABLED=1
   EXTNRFCFLAGS += -DNRF_SDH_BLE_CENTRAL_LINK_COUNT=1
   EXTNRFCFLAGS += -DNRF_SDH_BLE_TOTAL_LINK_COUNT=2
+endif
+ifeq ($(strip $(NRF_SEPARATE)), dongle)
+  NRFSRC += \
+    $(NRFSDK_ROOT)/components/ble/ble_db_discovery/ble_db_discovery.c \
+    $(NRFSDK_ROOT)/components/ble/ble_services/ble_nus_c/ble_nus_c.c \
+
+  EXTNRFCFLAGS += -DBLE_DB_DISCOVERY_ENABLED=1
+  EXTNRFCFLAGS += -DBLE_NUS_C_ENABLED=1
+  EXTNRFCFLAGS += -DPM_CENTRAL_ENABLED=1
+  EXTNRFCFLAGS += -DNRF_SDH_BLE_CENTRAL_LINK_COUNT=5
+  EXTNRFCFLAGS += -DNRF_SDH_BLE_TOTAL_LINK_COUNT=6
+  EXTNRFCFLAGS += -DBLE_GATT_DB_MAX_CHARS=16
+  EXTNRFCFLAGS += -DNRF_SDH_BLE_GATT_MAX_MTU_SIZE=247
 endif
 ifeq ($(strip $(NRF_SEPARATE)), slave)
   NRFSRC += \
@@ -901,14 +914,14 @@ dfu-util: $(BUILD_DIR)/$(TARGET).bin cpfirmware sizeafter
 
 bin: $(BUILD_DIR)/$(TARGET).bin sizeafter
 	$(COPY) $(BUILD_DIR)/$(TARGET).bin $(TARGET).bin;
-	
+
 GREP ?= grep
 NRFUTIL ?= nrfutil
 
 $(TARGET).ble.zip: $(TARGET).bin
 	if ! type "nrfutil" > /dev/null 2>&1; then \
 		echo 'ERROR: nrfutil is not found'; exit 1;\
-	fi	
+	fi
 	$(NRFUTIL) pkg generate --debug-mode --hw-version 0 --sd-req 0x8C --key-file $(PRIV_KEY) --application $(TARGET).bin $(TARGET).zip
 
 dfu_ble: $(TARGET).ble.zip
@@ -916,7 +929,7 @@ dfu_ble: $(TARGET).ble.zip
 $(TARGET).zip: $(TARGET).bin
 	if ! type "nrfutil" > /dev/null 2>&1; then \
 		echo 'ERROR: nrfutil is not found'; exit 1;\
-	fi	
+	fi
 	$(NRFUTIL) pkg generate --debug-mode --hw-version 52 --sd-req 0xA9 --application $(TARGET).bin $(TARGET).zip
 
 nrfutil: $(TARGET).zip
@@ -943,6 +956,10 @@ nrfutil: $(TARGET).zip
 		$(NRFUTIL) dfu usb_serial -pkg $(TARGET).zip -p $$USB; \
 	fi
 
+uf2: $(BUILD_DIR)/$(TARGET).bin
+	./util/uf2conv.py -f nrf52 -b 0x26000 -o $(TARGET).uf2 $(BUILD_DIR)/$(TARGET).bin -c
+	-./util/uf2conv.py -f nrf52 -b 0x26000 $(BUILD_DIR)/$(TARGET).bin
+
 elf: $(NRFLIB)
 
 NRFLIBOBJ := $(NRFLIBSRC:%.c=$(BUILD_DIR)/$(NRFLIB)/%.o)
@@ -954,7 +971,7 @@ $(BUILD_DIR)/$(NRFLIB)/%.o: %.c $(BUILD_DIR)/$(NRFLIB)/%.d $(BUILD_DIR)/$(NRFLIB
 	@$(SILENT) || printf "$(MSG_COMPILING) $<" | $(AWK_CMD)
 	$(CC) -c $(NRFCFLAGS) $(NRFLIBINC) -MMD -MP -MF $(patsubst %.o,%.td,$@) $< -o $@ && mv -f $(patsubst %.o,%.td,$@) $(patsubst %.o,%.d,$@)
 	@$(BUILD_CMD)
-	
+
 $(BUILD_DIR)/$(NRFLIB)/force:
 
 $(BUILD_DIR)/$(NRFLIB)/cflags.txt: $(BUILD_DIR)/$(NRFLIB)/force
@@ -968,7 +985,7 @@ $(NRFLIBDEPS):
 
 $(NRFLIB): $(NRFLIBOBJ)
 	$(AR) rcs $@ $^
-	
+
 # Include the dependency files.
 -include $(patsubst %.o,%.d,$(NRFLIBOBJ))
 
