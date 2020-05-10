@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "ble_common.h"
 #include "ble_master.h"
 #include "ble_central.h"
 #include "ble_dongle.h"

@@ -181,7 +181,7 @@ void matrix_init(void) {
 #if defined(USE_AS_I2C_SLAVE)
   i2cs_init();
 #endif
-  matrix_init_user();
+  matrix_init_quantum();
 }
 
 static inline void set_received_key(ble_switch_state_t key, bool from_slave) {

@@ -17,5 +17,4 @@
 
 void nus_c_init(void);
 void db_discovery_init(void);
-void scan_start(void);
 void on_ble_central_evt(const ble_evt_t * const p_ble_evt, uint16_t conn_handle);

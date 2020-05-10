@@ -35,7 +35,7 @@
   0x0050 /**< Determines scan window in units of 0.625 millisecond. */
 #define SCAN_DURATION                                                          \
   0 /**< Timout when scanning in 10ms. 0x0000 disables timeout. */
-#define SCAN_DURATION_WITELIST                                                 \
+#define SCAN_DURATION_WHITELIST                                                \
   0 /**< Duration of the scanning in units of 10 milliseconds. */
 
 #ifndef BLE_HIDS_C_MIN_INTERVAL
@@ -74,7 +74,7 @@ bool m_whitelist_disabled;
  * @brief Parameters used when scanning.
  */
 static ble_gap_scan_params_t m_scan_params = {
-    .active = 1,
+    .active = 0,
     .interval = SCAN_INTERVAL,
     .window = SCAN_WINDOW,
     .timeout = SCAN_DURATION,
@@ -126,28 +126,22 @@ void scan_start_wo_whitelist(void) {
     return;
   }
 
-  NRF_LOG_DEBUG("Chekck fstorage...");
-  if (!nrf_fstorage_is_busy(NULL)) {
-    (void)sd_ble_gap_scan_stop();
+  (void)sd_ble_gap_scan_stop();
 
-    m_scan_params.active = 0;
-    m_scan_params.interval = SCAN_INTERVAL;
-    m_scan_params.window = SCAN_WINDOW;
-    // Don't use whitelist.
-    m_scan_params.timeout = SCAN_DURATION;
-    m_scan_params.scan_phys = BLE_GAP_PHY_1MBPS;
-    m_scan_params.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
+  m_scan_params.active = 0;
+  m_scan_params.interval = SCAN_INTERVAL;
+  m_scan_params.window = SCAN_WINDOW;
+  // Don't use whitelist.
+  m_scan_params.timeout = SCAN_DURATION;
+  m_scan_params.scan_phys = BLE_GAP_PHY_1MBPS;
+  m_scan_params.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
 
-    err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
-    // It is okay to ignore this error since we are stopping the scan anyway.
-    if (err_code != NRF_SUCCESS) {
-      NRF_LOG_ERROR("scan start error: %d", err_code);
-      //      APP_ERROR_CHECK(err_code);
-    } else {
-      NRF_LOG_INFO("Scanning slave keyboard (wl:0)...");
-    }
+  err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
+
+  if (err_code != NRF_SUCCESS) {
+    NRF_LOG_ERROR("scan start error: %d", err_code);
   } else {
-    NRF_LOG_INFO("Fstorage is busy");
+    NRF_LOG_INFO("Scanning slave keyboard (wl:0)...");
   }
 }
 
@@ -186,7 +180,7 @@ void scan_start(void) {
     m_scan_params.interval = SCAN_INTERVAL;
     m_scan_params.window = SCAN_WINDOW;
 
-    if (!peer_id_is_allocated(0)) {
+    if (peer_id_n_ids() == 0) {
       m_whitelist_disabled = true;
     } else {
       m_whitelist_disabled = false;
@@ -194,21 +188,19 @@ void scan_start(void) {
 
     if (((addr_cnt == 0) && (irk_cnt == 0)) || (m_whitelist_disabled)) {
       // Don't use whitelist.
-      m_scan_params.timeout = SCAN_DURATION;
       m_scan_params.scan_phys = BLE_GAP_PHY_1MBPS;
       m_scan_params.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
+      m_scan_params.timeout = SCAN_DURATION;
     } else {
       // Use whitelist.
       m_scan_params.scan_phys = BLE_GAP_PHY_1MBPS;
       m_scan_params.filter_policy = BLE_GAP_SCAN_FP_WHITELIST;
-      m_scan_params.timeout = SCAN_DURATION_WITELIST;
+      m_scan_params.timeout = SCAN_DURATION_WHITELIST;
     }
 
     err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
-    // It is okay to ignore this error since we are stopping the scan anyway.
     if (err_code != NRF_SUCCESS) {
       NRF_LOG_ERROR("scan start error: %d", err_code);
-      //      APP_ERROR_CHECK(err_code);
     } else {
       NRF_LOG_INFO("Scanning slave keyboard (wl:%d)...",
                    m_whitelist_disabled ? 0 : 1);
@@ -295,6 +287,7 @@ static void on_ble_central_conn_evt(const ble_evt_t *const p_ble_evt) {
     break;
 
   case BLE_GAP_EVT_TIMEOUT:
+    NRF_LOG_INFO("Timeout event.");
     if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_SCAN) {
       NRF_LOG_INFO("Scan timed out.");
       scan_start();
@@ -330,14 +323,6 @@ static void on_ble_central_conn_evt(const ble_evt_t *const p_ble_evt) {
     // Disconnect on GATT Client timeout event.
     NRF_LOG_DEBUG("GATT Client Timeout.");
     err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gattc_evt.conn_handle,
-                                     BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-    APP_ERROR_CHECK(err_code);
-    break;
-
-  case BLE_GATTS_EVT_TIMEOUT:
-    // Disconnect on GATT Server timeout event.
-    NRF_LOG_INFO("GATT Server Timeout.");
-    err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle,
                                      BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
     APP_ERROR_CHECK(err_code);
     break;
