@@ -5,12 +5,9 @@
 #include "ble_conn_state.h"
 #include "nrf_gpio.h"
 
-#define LED_ON() (nrf_gpio_pin_clear(LED_PIN))
-#define LED_OFF() (nrf_gpio_pin_set(LED_PIN))
-
 void matrix_init_kb() {
   nrf_gpio_cfg_output(LED_PIN);
-  LED_OFF();
+  BLE_LED_OFF();
 }
 
 static uint32_t led_pattern = 0;
@@ -57,11 +54,11 @@ static void led_pattern0(uint32_t base_time) {
   uint32_t time = timer_elapsed32(base_time) % period;
 
   if (time > 0 && time < 50) {
-    LED_ON();
+    BLE_LED_ON();
   } else if (time > 150 && time < 200) {
-    LED_ON();
+    BLE_LED_ON();
   } else {
-    LED_OFF();
+    BLE_LED_OFF();
   }
 }
 
@@ -70,8 +67,8 @@ static void led_pattern1(uint32_t base_time) {
   uint32_t time = timer_elapsed32(base_time) % period;
 
   if (time > 0 && time < 100) {
-    LED_ON();
+    BLE_LED_ON();
   } else {
-    LED_OFF();
+    BLE_LED_OFF();
   }
 }

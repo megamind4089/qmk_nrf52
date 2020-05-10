@@ -1,5 +1,5 @@
 
-DEFAULT_FOLDER = ble_micro_pro/mdbt50rx
+DEFAULT_FOLDER = ble_micro_pro/dongle
 
 NRF_DEBUG = no
 

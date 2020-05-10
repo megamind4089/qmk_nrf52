@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include "custom_board.h"
+
 /* USB Device descriptor parameter */
 #define VENDOR_ID       0xFEED
 #define PRODUCT_ID      0xD061
@@ -36,8 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define IS_LEFT_HAND true
 
 #define MATRIX_ROW_PINS { 0xFF }
-#define MATRIX_COL_PINS { 15 }
-#define LED_PIN  45
+#define MATRIX_COL_PINS { PIN2 }
+#define LED_PIN  PIN1
 #define BLE_LED_ON() (nrf_gpio_pin_clear(LED_PIN))
 #define BLE_LED_OFF() (nrf_gpio_pin_set(LED_PIN))
 
