@@ -138,8 +138,7 @@
 #define OUTPUT_REPORT_MAX_LEN               1                                          /**< Maximum length of Output Report. */
 #define INPUT_REPORT_KEYS_INDEX             0                                          /**< Index of Input Report. */
 #define OUTPUT_REPORT_BIT_MASK_CAPS_LOCK    0x02                                       /**< CAPS LOCK bit in Output Report (based on 'LED Page (0x08)' of the Universal Serial Bus HID Usage Tables). */
-#define INPUT_REP_REF_ID                    0                                          /**< Id of reference to Keyboard Input Report. */
-#define OUTPUT_REP_REF_ID                   0                                          /**< Id of reference to Keyboard Output Report. */
+#define OUTPUT_REP_REF_ID                   1                                          /**< Id of reference to Keyboard Output Report. */
 
 #define MAX_BUFFER_ENTRIES                  5                                          /**< Number of elements that can be enqueued */
 
@@ -572,7 +571,7 @@ void composite_service_init(void) {
   ble_hids_outp_rep_init_t * p_output_report;
   uint8_t hid_info_flags;
 
-  memset((void *) input_report_array, 0, sizeof(ble_hids_inp_rep_init_t));
+  memset((void *) input_report_array, 0, sizeof(ble_hids_inp_rep_init_t) * COMPOSITE_REPORT_COUNT);
   memset((void *) output_report_array, 0, sizeof(ble_hids_outp_rep_init_t));
 
   // Initialize HID Service
@@ -698,7 +697,7 @@ void composite_service_init(void) {
       &composite_service_init_obj.security_mode_boot_mouse_inp_rep.cccd_write_perm);
   BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(
       &composite_service_init_obj.security_mode_boot_mouse_inp_rep.read_perm);
-  BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(
+  BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(
       &composite_service_init_obj.security_mode_boot_mouse_inp_rep.write_perm);
 
   BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(
@@ -763,6 +762,36 @@ void timers_start(void) {
   APP_ERROR_CHECK(err_code);
 }
 
+/**@brief Function for handling the HID Report Characteristic Write event.
+ *
+ * @param[in]   p_evt   HID service event.
+ */
+static void on_hid_rep_char_write(ble_hids_evt_t * p_evt)
+{
+  if (p_evt->params.char_write.char_id.rep_type == BLE_HIDS_REP_TYPE_OUTPUT)
+  {
+    ret_code_t err_code;
+    uint8_t  report_val;
+    uint8_t  report_index = p_evt->params.char_write.char_id.rep_index;
+
+    if (report_index == OUTPUT_REPORT_INDEX)
+    {
+      // This code assumes that the output report is one byte long. Hence the following
+      // static assert is made.
+      STATIC_ASSERT(OUTPUT_REPORT_MAX_LEN == 1);
+
+      err_code = ble_hids_outp_rep_get(&m_hids_composite,
+                                       report_index,
+                                       OUTPUT_REPORT_MAX_LEN,
+                                       0,
+                                       m_conn_handle,
+                                       &report_val);
+      APP_ERROR_CHECK(err_code);
+      keyboard_led_stats = report_val;
+    }
+  }
+}
+
 /**@brief Function for handling HID events.
  *
  * @details This function will be called for all HID events which are passed to the application.
@@ -781,6 +810,7 @@ static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t * p_evt) {
     break;
 
   case BLE_HIDS_EVT_REP_CHAR_WRITE:
+    on_hid_rep_char_write(p_evt);
     break;
 
   case BLE_HIDS_EVT_NOTIF_ENABLED:
