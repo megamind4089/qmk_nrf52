@@ -567,13 +567,16 @@ char cdc_acm_getc() {
 //static void kbd_action(uint32_t button_state) {
 //}
 //
+
+extern uint16_t keyboard_led_stats;
 static void kbd_status(void) {
-//    bool v;
-//    v = app_usbd_hid_kbd_led_state_get(&m_app_hid_kbd, APP_USBD_HID_KBD_LED_NUM_LOCK);
-//    v ? bsp_board_led_on(LED_HID_REP_IN) : bsp_board_led_off(LED_HID_REP_IN);
-//
-//    v = app_usbd_hid_kbd_led_state_get(&m_app_hid_kbd, APP_USBD_HID_KBD_LED_CAPS_LOCK);
-//    v ? bsp_board_led_on(LED_HID_REP_OUT) : bsp_board_led_off(LED_HID_REP_OUT);
+	uint8_t led=0;
+	led += app_usbd_hid_kbd_led_state_get(&m_app_hid_kbd, APP_USBD_HID_KBD_LED_NUM_LOCK) ? APP_USBD_HID_KBD_LED_NUM_LOCK : 0;
+	led += app_usbd_hid_kbd_led_state_get(&m_app_hid_kbd, APP_USBD_HID_KBD_LED_CAPS_LOCK) ? APP_USBD_HID_KBD_LED_CAPS_LOCK : 0;
+	led += app_usbd_hid_kbd_led_state_get(&m_app_hid_kbd, APP_USBD_HID_KBD_LED_SCROLL_LOCK) ? APP_USBD_HID_KBD_LED_SCROLL_LOCK : 0;
+	led += app_usbd_hid_kbd_led_state_get(&m_app_hid_kbd, APP_USBD_HID_KBD_LED_COMPOSE) ? APP_USBD_HID_KBD_LED_COMPOSE : 0;
+	led += app_usbd_hid_kbd_led_state_get(&m_app_hid_kbd, APP_USBD_HID_KBD_LED_KANA) ? APP_USBD_HID_KBD_LED_KANA : 0;
+    keyboard_led_stats = led;
 }
 
 
