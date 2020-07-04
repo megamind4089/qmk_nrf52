@@ -20,8 +20,8 @@ char cdc_acm_getc();
 
 #else
 int usbd_init(void) {return 0;}
-int usbd_enable(void) {}
-void usbd_process(void) {return 0;}
+int usbd_enable(void) {return 0;}
+void usbd_process(void) {}
 int usbd_send_keyboard(report_keyboard_t *report) {return 0;}
 int usbd_send_mouse(report_mouse_t *report) {return 0;}
 int usbd_send_system(uint16_t data) {return 0;}
