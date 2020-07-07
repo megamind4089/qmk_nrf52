@@ -114,6 +114,7 @@ void main_tasks(void* p_context) {
 }
 
 void send_keyboard(report_keyboard_t *report) {
+  NRF_LOG_HEXDUMP_DEBUG(report->raw, 8);
   if (get_ble_enabled()) {
     ble_send_keyboard(report);
   }

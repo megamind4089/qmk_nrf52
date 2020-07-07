@@ -175,7 +175,6 @@ BLE_ADVERTISING_DEF( m_advertising); /**< Advertising module instance. */
 
 static bool m_in_boot_mode = false; /**< Current protocol mode. */
 static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID; /**< Handle of the current connection. */
-static bool m_caps_on = false; /**< Variable to indicate if Caps Lock is turned on. */
 static pm_peer_id_t m_peer_id; /**< Device reference handle to the current bonded central. */
 static uint32_t m_whitelist_peer_cnt; /**< Number of peers currently in the whitelist. */
 static pm_peer_id_t m_whitelist_peers[BLE_GAP_WHITELIST_ADDR_MAX_COUNT]; /**< List of peers currently in the whitelist. */
@@ -941,10 +940,8 @@ static void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt) {
 
     m_conn_handle = BLE_CONN_HANDLE_INVALID;
 
-    // Reset m_caps_on variable. Upon reconnect, the HID host will re-send the Output
-    // report containing the Caps lock state.
-    m_caps_on = false;
-    // disabling alert 3. signal - used for capslock ON
+    // Reset keyboard_led_stats variable. Upon reconnect, the HID host will re-send the Output
+    keyboard_led_stats = 0;
 
     break; // BLE_GAP_EVT_DISCONNECTED
 
@@ -1119,11 +1116,11 @@ void ble_send_keyboard(report_keyboard_t *report) {
         COMPOSITE_REPORT_INDEX_KEYBOARD, INPUT_REPORT_KEYS_MAX_LEN, report->raw,
         m_conn_handle);
 #endif
-    NRF_LOG_DEBUG("key normal report send\r\n");
+    NRF_LOG_DEBUG("key normal report send:%d", err_code);
   } else {
     err_code = ble_hids_boot_kb_inp_rep_send(&m_hids_composite,
     INPUT_REPORT_KEYS_MAX_LEN, report->raw, m_conn_handle);
-    NRF_LOG_DEBUG("key boot report send\r\n");
+    NRF_LOG_DEBUG("key boot report send:%d", err_code);
   }
 //    APP_ERROR_CHECK(err_code);
   if (err_code != NRF_SUCCESS) {
@@ -1147,9 +1144,9 @@ void ble_send_abs_mouse(int8_t x, int8_t y) {
   }
   uint32_t err_code = ble_hids_inp_rep_send(&m_hids_composite,
       COMPOSITE_REPORT_INDEX_ABS_MOUSE, 2, (uint8_t*) data, m_conn_handle);
-  NRF_LOG_DEBUG("abs mouse report send\r\n");
+  NRF_LOG_DEBUG("abs mouse report send:%d", err_code);
   if (err_code != NRF_SUCCESS) {
-    NRF_LOG_DEBUG("abs mouse send error\r\n");
+    NRF_LOG_DEBUG("abs mouse send error");
   }
 }
 
@@ -1375,6 +1372,14 @@ bool get_ble_enabled () { return enable_ble_send; }
 void set_ble_enabled (bool enabled) { enable_ble_send = enabled; }
 bool get_usb_enabled () { return enable_usb_send; }
 void set_usb_enabled (bool enabled) { enable_usb_send = enabled; }
+void select_ble() {
+  enable_ble_send = true;
+  enable_usb_send = false;
+}
+void select_usb() {
+  enable_ble_send = false;
+  enable_usb_send = true;
+}
 /**
  * @}
  */
