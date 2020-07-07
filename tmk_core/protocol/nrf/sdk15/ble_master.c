@@ -90,9 +90,7 @@
 #define APP_BLE_CONN_CFG_TAG                1                                          /**< A tag identifying the SoftDevice BLE configuration. */
 
 #define BATTERY_LEVEL_MEAS_INTERVAL         APP_TIMER_TICKS(2000)                      /**< Battery level measurement interval (ticks). */
-#define MIN_BATTERY_LEVEL                   81                                         /**< Minimum simulated battery level. */
-#define MAX_BATTERY_LEVEL                   100                                        /**< Maximum simulated battery level. */
-#define BATTERY_LEVEL_INCREMENT             1                                          /**< Increment between each simulated battery level measurement. */
+#define MAX_VBAT_HISTORY_SIZE               30
 
 #define PNP_ID_VENDOR_ID_SOURCE             0x02                                       /**< Vendor ID Source. */
 #define PNP_ID_VENDOR_ID                    0x1915                                     /**< Vendor ID. */
@@ -178,6 +176,12 @@ static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID; /**< Handle of the curr
 static pm_peer_id_t m_peer_id; /**< Device reference handle to the current bonded central. */
 static uint32_t m_whitelist_peer_cnt; /**< Number of peers currently in the whitelist. */
 static pm_peer_id_t m_whitelist_peers[BLE_GAP_WHITELIST_ADDR_MAX_COUNT]; /**< List of peers currently in the whitelist. */
+
+#ifdef USE_BATTERY_PIN
+static int16_t m_vbat_history[MAX_VBAT_HISTORY_SIZE]; /**< List of battery voltage measuring for calculate average. */
+static uint8_t m_vbat_history_length = 0;
+static uint8_t m_vbat_history_index = 0;
+#endif
 
 static ble_uuid_t m_adv_uuids[] = { { BLE_UUID_HUMAN_INTERFACE_DEVICE_SERVICE,
     BLE_UUID_TYPE_BLE } };
@@ -392,7 +396,39 @@ static void battery_level_update(void) {
   uint8_t battery_level;
 
   adc_start();
+#ifdef USE_BATTERY_PIN
+  m_vbat_history[m_vbat_history_index] = get_vcc();
+  m_vbat_history_index++;
+  m_vbat_history_index %= MAX_VBAT_HISTORY_SIZE;
+  if (m_vbat_history_length < MAX_VBAT_HISTORY_SIZE){
+    m_vbat_history_length++;
+  }
+  uint32_t sum = 0;
+  for (uint8_t i = 0; i < m_vbat_history_length; i++) {
+    sum += m_vbat_history[i];
+  }
+# ifndef BATTERY_VMAX
+#   define V_MAX 4200
+# else
+#   define V_MAX BATTERY_VMAX
+# endif
+# ifndef BATTERY_VMIN
+#   define V_MIN 2900
+# else
+#   define V_MIN BATTERY_VMIN
+# endif
+  int16_t vbat = sum / m_vbat_history_length;
+  int16_t diff = vbat - V_MIN;
+  if (diff < 0) {
+    diff = 0;
+  } else if (diff > (V_MAX-V_MIN)) {
+    diff = V_MAX-V_MIN;
+  }
+  battery_level = diff * 100 / (V_MAX-V_MIN);
+  NRF_LOG_DEBUG("         Avg: %04d mV, %d%%", vbat, battery_level);
+#else
   battery_level = get_vcc() / 30;
+#endif
 
   err_code = ble_bas_battery_level_update(&m_bas, battery_level,
       BLE_CONN_HANDLE_ALL);
@@ -425,6 +461,10 @@ void timers_init(void (*main_task)(void*)) {
 
   err_code = app_timer_init();
   APP_ERROR_CHECK(err_code);
+
+#ifdef USE_BATTERY_PIN
+  memset(&m_vbat_history, 0, sizeof(m_vbat_history));
+#endif
 
   // Create battery timer.
   err_code = app_timer_create(&m_battery_timer_id, APP_TIMER_MODE_REPEATED,
