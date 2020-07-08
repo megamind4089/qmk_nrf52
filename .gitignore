@@ -1,5 +1,6 @@
 .dep
 *.o
+/*.a
 *.bin
 *.eep
 *.elf
