@@ -117,12 +117,21 @@ void sleep_mode_enter(void) {
       nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_READY) {
     return;
   }
+#if DIODE_DIRECTION == ROW2COL
+  for (i=0; i<THIS_DEVICE_COLS; i++) {
+    nrf_gpio_pin_clear(col_pins[i]);
+  }
+  for (i=0; i<THIS_DEVICE_ROWS; i++) {
+    nrf_gpio_cfg_sense_input(row_pins[i], NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
+  }
+#else
   for (i=0; i<THIS_DEVICE_ROWS; i++) {
     nrf_gpio_pin_clear(row_pins[i]);
   }
   for (i=0; i<THIS_DEVICE_COLS; i++) {
     nrf_gpio_cfg_sense_input(col_pins[i], NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
   }
+#endif
 
   sd_power_system_off();
 }
