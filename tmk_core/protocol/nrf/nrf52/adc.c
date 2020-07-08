@@ -42,8 +42,8 @@ void adc_init() {
 }
 
 void adc_start() {
-  nrfx_err_t res = nrf_drv_saadc_sample_convert(0, adc_buffer); // blocking function
-  if (res != NRFX_SUCCESS) {
+  ret_code_t res = nrf_drv_saadc_sample_convert(0, adc_buffer); // blocking function
+  if (res != NRF_SUCCESS) {
     adc_buffer[0] = 0;
   }
 #ifdef USE_BATTERY_PIN
