@@ -21,8 +21,10 @@ endif
 
 ifeq ($(MCU_SERIES), NRF52840)
  SRC += $(NRF_DIR)/$(NRF_VER_DIR)/usbd.c \
-       $(NRF_DIR)/$(NRF_VER_DIR)/app_usbd_hid_kbd.c \
-       $(NRF_DIR)/$(NRF_VER_DIR)/app_usbd_hid_mouse.c \
+       $(NRF_DIR)/$(NRF_VER_DIR)/usbd_hid_kbd.c \
+       $(NRF_DIR)/$(NRF_VER_DIR)/usbd_hid_mouse.c \
+       $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/kbd/app_usbd_hid_kbd.c \
+       $(NRFSDK_ROOT)/components/libraries/usbd/class/hid/mouse/app_usbd_hid_mouse.c \
        $(NRF_DIR)/$(NRF_VER_DIR)/cli.c \
        $(NRF_DIR)/microshell/core/microshell.c \
        $(NRF_DIR)/microshell/core/mscore.c \

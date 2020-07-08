@@ -571,6 +571,8 @@ char cdc_acm_getc() {
 //}
 //
 
+extern bool app_usbd_hid_kbd_led_state_get(app_usbd_hid_kbd_t const * p_kbd,
+                                           app_usbd_hid_kbd_led_t     led);
 extern uint16_t keyboard_led_stats;
 static void kbd_status(void) {
 	uint8_t led=0;
