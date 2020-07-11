@@ -46,6 +46,7 @@
 #include "host.h"
 #include "usb_descriptor.h"
 #include "cli.h"
+#include "app_ble_func.h"
 
 #ifdef RGBLIGHT_ENABLE
 #include "rgblight.h"
@@ -204,6 +205,8 @@ const uint8_t MouseReport[] = {
         0xc0                           /* END_COLLECTION                                 */\
 }
 
+static bool auto_connection_check = false;
+static int auto_connection_check_cnt = 0;
 
 /**
  * @brief User event handler, HID mouse
@@ -568,6 +571,8 @@ char cdc_acm_getc() {
 //}
 //
 
+extern bool app_usbd_hid_kbd_led_state_get(app_usbd_hid_kbd_t const * p_kbd,
+                                           app_usbd_hid_kbd_led_t     led);
 extern uint16_t keyboard_led_stats;
 static void kbd_status(void) {
 	uint8_t led=0;
@@ -643,6 +648,8 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
             break;
         case APP_USBD_EVT_DRV_SUSPEND:
             app_usbd_suspend_req(); // Allow the library to put the peripheral into sleep mode
+            NRF_LOG_DEBUG("APP_USBD_EVT_DRV_SUSPEND");
+            auto_connection_check = true;
             break;
         case APP_USBD_EVT_DRV_RESUME:
             kbd_status(); /* Restore LED state - during SUSPEND all LEDS are turned off */
@@ -652,6 +659,7 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
         case APP_USBD_EVT_STOPPED:
             app_usbd_disable();
             NRF_LOG_DEBUG("USB disable");
+            auto_connection_check = true;
             break;
         case APP_USBD_EVT_POWER_DETECTED:
             NRF_LOG_DEBUG("USB power detected");
@@ -736,6 +744,34 @@ int usbd_enable(void) {
 
 void usbd_process(void) {
   while (app_usbd_event_queue_process()) {
+    if (auto_connection_check) {
+      if (auto_connection_check_cnt > 100) {
+        auto_connection_check = false;
+        NRF_LOG_DEBUG("auto_connection_check!");
+        NRF_LOG_DEBUG("nrf_drv_usbd_is_started: %d", nrf_drv_usbd_is_started());
+        NRF_LOG_DEBUG("nrf_drv_usbd_bus_suspend_check: %d", nrf_drv_usbd_bus_suspend_check());
+        if (nrf_drv_usbd_is_started()) {
+          if (!get_usb_enabled()) {
+            if (!nrf_drv_usbd_bus_suspend_check()) { // connect to USB HOST
+              select_usb(true);
+              NRF_LOG_DEBUG("USB send enabled");
+            } else { // connect to CHARGER
+              if (!get_ble_enabled()) {
+                select_ble();
+                NRF_LOG_DEBUG("BLE enable");
+              }
+            }
+          }
+        } else {
+          if (!get_ble_enabled()) { // USB POWER removed and battery present
+            select_ble();
+            NRF_LOG_DEBUG("BLE enable");
+          }
+        }
+      } else {
+        auto_connection_check_cnt++;
+      }
+    }
     continue;/* Nothing to do */
   }
   cli_exec();
@@ -744,9 +780,8 @@ void usbd_process(void) {
 int usbd_send_kbd_report(app_usbd_hid_kbd_t const *  p_kbd, report_keyboard_t *report);
 int usbd_send_mouse_report(app_usbd_hid_mouse_t const *  p_mouse, report_mouse_t *report);
 int usbd_send_keyboard(report_keyboard_t *report) {
-  NRF_LOG_DEBUG("%d", report->keys[0]);
   uint8_t res = usbd_send_kbd_report(&m_app_hid_kbd, report);
-  NRF_LOG_DEBUG("res:%d", res);
+  NRF_LOG_DEBUG("USB send res:%d", res);
 
   if (nrf_drv_usbd_suspend_check()) {
     app_usbd_wakeup_req();
