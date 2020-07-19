@@ -67,7 +67,6 @@
 static const nrfx_twim_t m_twim_master = NRFX_TWIM_INSTANCE(0);
 static int twim_complete = 0;
 void twim_evt_handler(nrfx_twim_evt_t const *p_event, void *p_context) {
-  NRF_LOG_INFO("TWIM Event:%d", p_event->type);
   twim_complete = p_event->type + 1;
 }
 
@@ -89,7 +88,7 @@ void i2c_uninit(void) {
   nrfx_twim_uninit(&m_twim_master);
 }
 
-uint8_t i2c_transmit(uint8_t address, uint8_t* data, uint16_t length)
+uint8_t i2c_transmit(uint8_t address, const uint8_t* data, uint16_t length, uint16_t timeout)
 {
   nrfx_err_t res;
   twim_complete = 0;
@@ -99,14 +98,16 @@ uint8_t i2c_transmit(uint8_t address, uint8_t* data, uint16_t length)
     while (twim_complete == 0) {
 //      __WFI();
       nrf_pwr_mgmt_run();
-      if(cnt++ == 1000) break;
+      if(cnt++ == 1000)  {
+          NRF_LOG_INFO("TX TIMEOUT");
+          break;
+      }
     }
   }
-  if(cnt == 1000) NRF_LOG_INFO("TX TIMEOUT");
   return twim_complete == 1 ? 0 : 1;
 }
 
-uint8_t i2c_receive(uint8_t address, uint8_t* data, uint16_t length)
+uint8_t i2c_receive(uint8_t address, uint8_t* data, uint16_t length, uint16_t timeout)
 {
   nrfx_err_t res;
   twim_complete = 0;
@@ -126,14 +127,14 @@ uint8_t i2c_receive(uint8_t address, uint8_t* data, uint16_t length)
 uint8_t i2c_readReg(uint8_t devaddr, uint8_t regaddr, uint8_t* data, uint16_t length, uint16_t timeout) {
 //  nrfx_twi_tx(&m_twi_master, devaddr, &regaddr, 1, true);
 //  return nrfx_twi_rx(&m_twi_master, devaddr, data, length);
-  i2c_transmit(devaddr, &regaddr, 1);
-  return i2c_receive(devaddr, data, length);
+  i2c_transmit(devaddr, &regaddr, 1, timeout);
+  return i2c_receive(devaddr, data, length, timeout);
 }
 
-uint8_t i2c_writeReg(uint8_t devaddr, uint8_t regaddr, uint8_t* data, uint16_t length, uint16_t timeout) {
+uint8_t i2c_writeReg(uint8_t devaddr, uint8_t regaddr, const uint8_t* data, uint16_t length, uint16_t timeout) {
   static uint8_t buffer[256];
   buffer[0] = regaddr;
   memcpy(&buffer[1], data, length);
-  return i2c_transmit(devaddr, buffer, length+1);
+  return i2c_transmit(devaddr, buffer, length+1, timeout);
   return 0;
 }
