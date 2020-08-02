@@ -212,9 +212,9 @@ const uint8_t CompositeReportMap[] =
  */
 
 
-uint8_t keyboard_idle __attribute__((aligned(2))) = 0;
-uint8_t keyboard_protocol __attribute__((aligned(2))) = 1;
-uint16_t keyboard_led_stats __attribute__((aligned(2))) = 0;
+extern uint8_t keyboard_idle;
+extern uint8_t keyboard_protocol;
+extern uint16_t keyboard_led_stats;
 
 report_keyboard_t keyboard_report_sent = {{0}};
 #ifdef MOUSE_ENABLE

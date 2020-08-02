@@ -44,9 +44,9 @@ void sleep_mode_enter();
 uint16_t get_vcc();
 
 #ifdef NRF_SEPARATE_KEYBOARD_SLAVE
-#define get_ble_enabled()
+#define get_ble_enabled() false
 #define set_ble_enabled(x)
-#define get_usb_enabled()
+#define get_usb_enabled() false
 #define set_usb_enabled(x)
 #define select_ble()
 #define select_usb()

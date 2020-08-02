@@ -22,6 +22,10 @@
 #define SCHED_QUEUE_SIZE                 80                                          /**< Maximum number of events in the scheduler queue. */
 #endif
 
+uint8_t keyboard_idle __attribute__((aligned(2))) = 0;
+uint8_t keyboard_protocol __attribute__((aligned(2))) = 1;
+uint16_t keyboard_led_stats __attribute__((aligned(2))) = 0;
+
 /**@brief Function for the Power manager.
  */
 void power_manage(void) {
