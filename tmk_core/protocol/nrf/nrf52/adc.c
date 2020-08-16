@@ -37,8 +37,8 @@ void adc_init() {
   nrf_drv_saadc_config_t adccfg = NRF_DRV_SAADC_DEFAULT_CONFIG;
   adccfg.resolution = NRF_SAADC_RESOLUTION_8BIT;
   nrf_drv_saadc_init(&adccfg, adc_event_handler);
-  nrf_saadc_channel_config_t pincfg = NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(APP_VCC_PIN);
-  nrf_drv_saadc_channel_init(0, &pincfg);
+  // nrf_saadc_channel_config_t pincfg = NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(APP_VCC_PIN);
+  // nrf_drv_saadc_channel_init(0, &pincfg);
 }
 
 void adc_start() {

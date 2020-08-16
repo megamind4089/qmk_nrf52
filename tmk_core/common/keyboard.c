@@ -72,6 +72,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef HD44780_ENABLE
 #   include "hd44780.h"
 #endif
+#ifdef OLED_DRIVER_ENABLE
+#    include "oled_driver.h"
+#endif
+
 
 #ifdef MATRIX_HAS_GHOST
 extern const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS];
