@@ -590,6 +590,11 @@ slave:
 	python ./uf2conv.py ./.build/lily58_ble_slave_default.hex -c -f 0xADA52840
 	mv flash.uf2 ~/downloads/lily58_slave.uf2
 
+blink:
+	make V=1 blink_nrf52
+	python ./uf2conv.py ./.build/blink_nrf52_default.hex -c -f 0xADA52840
+	mv flash.uf2 ~/downloads/blink.uf2
+
 ifdef SKIP_VERSION
 SKIP_GIT := yes
 endif
