@@ -21,8 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#define ENABLE_STARTUP_ADV_NOLIST
+
 #define BLE_NUS_MIN_INTERVAL 30
-#define BLE_NUS_MAX_INTERVAL 70
+#define BLE_NUS_MAX_INTERVAL 30
+#define BLE_HID_MAX_INTERVAL 50
+#define BLE_HID_SLAVE_LATENCY 3
 
 /* USB Device descriptor parameter */
 #define VENDOR_ID       0xFC51
@@ -58,6 +62,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define RGB_DI_PIN 8     // The pin the LED strip is connected to
 //#define RGBLED_NUM 5     // Number of LEDs in your strip
 
+#define PROGMEM
 /*
  * Feature disable options
  *  These options are also useful to firmware size reduction.

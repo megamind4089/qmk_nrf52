@@ -1,5 +1,5 @@
-#ifndef LILY58_BLE_H_
-#define LILY58_BLE_H_
+#ifndef SOFLE_BLE_H_
+#define SOFLE_BLE_H_
 
 #include "quantum.h"
 
@@ -46,4 +46,4 @@
         { KC_NO, R41, R42, R43, R44, R45 } \
 	}
 	
-#endif /* LILY58_BLE_H_ */
+#endif /* SOFLE_BLE_H_ */

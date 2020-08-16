@@ -580,6 +580,18 @@ git-submodule:
 	git submodule sync --recursive
 	git submodule update --init --recursive
 
+master:
+	make clean
+	make V=1 lily58_ble/master
+	python ./uf2conv.py ./.build/lily58_ble_master_default.hex -c -f 0xADA52840
+	mv flash.uf2 ~/downloads/lily58_master.uf2
+
+slave:
+	make clean
+	make V=1 lily58_ble/slave
+	python ./uf2conv.py ./.build/lily58_ble_slave_default.hex -c -f 0xADA52840
+	mv flash.uf2 ~/downloads/lily58_slave.uf2
+
 ifdef SKIP_VERSION
 SKIP_GIT := yes
 endif

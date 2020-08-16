@@ -3,11 +3,6 @@
 
 #include "custom_board.h"
 
-#define THIS_DEVICE_ROWS 5
-#define THIS_DEVICE_COLS 6
-
-#define MATRIX_ROW_PINS { PIN8, PIN9, PIN10, PIN11, PIN12 }
-#define MATRIX_COL_PINS { PIN18, PIN17, PIN16, PIN15, PIN14, PIN13 }
 #define IS_LEFT_HAND  false
 
 #endif /* KEYBOARDS_NRF52_SEPARATE_TEST_ */
