@@ -1,5 +1,1 @@
-#ifndef KEYBOARDS_SOFLE_BLE_MASTER_H_
-#define KEYBOARDS_SOFLE_BLE_MASTER_H_
-
-
-#endif /* KEYBOARDS_SOFLE_BLE_MASTER_H_ */
+#pragma once
