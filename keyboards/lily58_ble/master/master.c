@@ -18,20 +18,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "matrix.h"
 #undef PACKED
 #include "nrf.h"
+#include "nrfmicro.h"
 #include "app_ble_func.h"
 #include "wait.h"
 
 #include "nrf_gpio.h"
 #include "nrf_delay.h"
 
-#include "nrf/i2c.h"
-
 void unselect_rows(void);
 void select_row(uint8_t row);
 matrix_row_t read_cols(void);
-
-void nrfmicro_init(void);
-void nrfmicro_update(void);
 
 static bool bootloader_flag = false;
 

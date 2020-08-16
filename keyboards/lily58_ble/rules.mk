@@ -33,3 +33,5 @@ NRFSDK_ROOT := $(NRFSDK15_ROOT)
 # Build Options
 #   comment out to disable the options.
 #
+
+SRC = board/nrfmicro.c

@@ -19,6 +19,7 @@
 
 #undef PACKED
 #include "nrf.h"
+#include "nrfmicro.h"
 #include "app_ble_func.h"
 #include "wait.h"
 
@@ -33,9 +34,6 @@
 void unselect_rows(void);
 void select_row(uint8_t row);
 matrix_row_t read_cols(void);
-
-void nrfmicro_init(void);
-void nrfmicro_update(void);
 
 static bool bootloader_flag = false;
 
