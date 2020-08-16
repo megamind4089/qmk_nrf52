@@ -275,11 +275,7 @@ void oled_task_user(void)
     oled_write_ln_P("\n\n", false);
 
     memset(str, 0, sizeof str);
-#if (IS_LEFT_HAND)
-    sprintf(vc, "%4dmV", vcc - 650);
-#else
     sprintf(vc, "%4dmV", vcc);
-#endif
     sprintf(str, "Bat: %s USB: %s", vcc==0 ? "off   " : vc, has_usb()? "on":"off");
     oled_write_ln_P(PSTR(str), false);
     oled_write_ln_P("\n", false);
