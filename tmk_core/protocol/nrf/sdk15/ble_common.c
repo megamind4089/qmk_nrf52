@@ -7,6 +7,7 @@
 #include "nrfx_power.h"
 #include "peer_manager.h"
 
+#include "quantum.h"
 #include "app_ble_func.h"
 #include "usbd.h"
 
