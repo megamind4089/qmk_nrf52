@@ -10,7 +10,7 @@
 // adafruit bootloader, send "dfu" to debug serial port
 #define DFU_MAGIC_UF2_RESET             0x57
 
-#define POWER_TIMEOUT  300000
+#define POWER_TIMEOUT  900000
 
 uint32_t power_timeout;
 bool power_enabled = false;
