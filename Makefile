@@ -609,6 +609,19 @@ blink:
 	python $(UTIL_DIR)/uf2conv.py ./.build/blink_nrf52_default.hex -c -f 0xADA52840
 	mv flash.uf2 ~/downloads/blink.uf2
 
+smatreus:
+	make V=1 atreus50_ble
+	python $(UTIL_DIR)/uf2conv.py ./.build/atreus50_ble_default.hex -c -f 0xADA52840
+	mv flash.uf2 ~/downloads/smatreus.uf2
+	stty -F /dev/ttyACM0 speed 38400 cs8 -cstopb -parenb
+	stty -F /dev/ttyACM0 speed 38400 cs8 -cstopb -parenb
+	echo -en "\n" > /dev/ttyACM0
+	echo -en "dfu\n" > /dev/ttyACM0
+	sleep 5
+	cp ~/downloads/smatreus.uf2 /run/media/maari/NRF52BOOT/
+	echo "Copied firmware. Now resetting"
+
+
 ifdef SKIP_VERSION
 SKIP_GIT := yes
 endif
