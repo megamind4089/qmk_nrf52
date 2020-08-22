@@ -27,6 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef RGBLIGHT_ENABLE
 #include "rgblight.h"
 #endif
+#ifdef OLED_DRIVER_ENABLE
+#    include "oled_driver.h"
+#endif
 
 const uint8_t MAINTASK_INTERVAL=17;
 
@@ -38,6 +41,11 @@ void timer_tick(uint8_t interval);
 static void slave_main_tasks(void* context) {
   timer_tick(MAINTASK_INTERVAL);
   matrix_scan();
+
+#ifdef OLED_DRIVER_ENABLE
+    oled_task();
+#endif
+
 #if defined(RGBLIGHT_ENABLE) && defined(RGBLIGHT_ANIMATIONS)
   rgblight_task();
 #endif

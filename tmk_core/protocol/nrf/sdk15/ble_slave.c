@@ -806,6 +806,10 @@ void ble_disconnect() {
   }
 }
 
+bool ble_connected() {
+    return m_conn_handle != BLE_CONN_HANDLE_INVALID;
+}
+
 void advertising_start(void) {
   ret_code_t ret;
 
