@@ -124,11 +124,11 @@ void sleep_mode_enter(void) {
 
   nrfmicro_power_enable(false);
 
-  for (i=0; i<THIS_DEVICE_ROWS; i++) {
-    nrf_gpio_pin_clear(row_pins[i]);
-  }
   for (i=0; i<THIS_DEVICE_COLS; i++) {
-    nrf_gpio_cfg_sense_input(col_pins[i], NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
+    nrf_gpio_pin_clear(col_pins[i]);
+  }
+  for (i=0; i<THIS_DEVICE_ROWS; i++) {
+    nrf_gpio_cfg_sense_input(row_pins[i], NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
   }
 
   sd_power_system_off();
