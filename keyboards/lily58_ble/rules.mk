@@ -8,8 +8,10 @@ CONSOLE_ENABLE = yes	# Console for debug
 COMMAND_ENABLE = yes    # Commands for debug and configuration
 SLEEP_LED_ENABLE = no   # Breathing sleep LED during USB suspend
 NKRO_ENABLE = no	    # USB Nkey Rollover
-OLED_DRIVER_ENABLE = no	# OLED disabled
-CUSTOM_MATRIX = yes # This flag should be on for nrf52
+OLED_DRIVER_ENABLE = yes
+
+# This flag should be on for nrf52
+CUSTOM_MATRIX = yes
 
 NO_USB_STARTUP_CHECK = yes
 

@@ -18,7 +18,9 @@
 #include QMK_KEYBOARD_H
 
 #include "app_ble_func.h"
-#include "nrfmicro.h"
+
+extern void nrfmicro_power_enable(bool);
+extern bool has_usb(void);
 
 enum custom_keycodes {
     AD_WO_L = SAFE_RANGE, /* Start advertising without whitelist  */

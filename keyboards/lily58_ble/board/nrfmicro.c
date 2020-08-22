@@ -14,7 +14,7 @@
 // adafruit bootloader, send "dfu" to debug serial port
 #define DFU_MAGIC_UF2_RESET             0x57
 
-#define POWER_TIMEOUT  30000
+#define POWER_TIMEOUT  300000
 
 uint32_t power_timeout;
 bool power_enabled = false;
@@ -90,7 +90,6 @@ void nrfmicro_update(void) {
     check_ble_switch(false);
 
     if (power_enabled && timer_read32() > power_timeout) {
-        nrfmicro_power_enable(false);
         sleep_mode_enter();
     }
 }
