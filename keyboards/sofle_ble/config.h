@@ -28,12 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BLE_HID_SLAVE_LATENCY 3
 
 /* USB Device descriptor parameter */
-#define VENDOR_ID       0xFC51
-#define PRODUCT_ID      0x0058
+#define VENDOR_ID       0xFC32
+#define PRODUCT_ID      0x0287
 #define DEVICE_VER      0x0100
-#define MANUFACTURER    F_YUUCHI
-#define PRODUCT         Lily58 BLE
-#define DESCRIPTION     Lily58 is 6x4+5keys column-staggered split keyboard.
+#define MANUFACTURER    JosefAdamcik
+#define PRODUCT         Sofle
+#define DESCRIPTION     Sofle is 6x4+5keys+encoder column-staggered split keyboard.
 
 /* key matrix size */
 #define MATRIX_ROWS 10

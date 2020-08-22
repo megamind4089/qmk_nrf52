@@ -1,0 +1,2 @@
+NRF_SEPARATE = slave
+

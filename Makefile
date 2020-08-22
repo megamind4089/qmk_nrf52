@@ -581,6 +581,7 @@ git-submodule:
 	git submodule update --init --recursive
 
 UTIL_DIR := $(ROOT_DIR)util
+
 master:
 	make V=1 lily58_ble/master
 	python $(UTIL_DIR)/uf2conv.py ./.build/lily58_ble_master_default.hex -c -f 0xADA52840
@@ -590,6 +591,16 @@ slave:
 	make V=1 lily58_ble/slave
 	python $(UTIL_DIR)/uf2conv.py ./.build/lily58_ble_slave_default.hex -c -f 0xADA52840
 	mv flash.uf2 ~/downloads/lily58_slave.uf2
+
+smaster:
+	make V=1 sofle_ble/master
+	python $(UTIL_DIR)/uf2conv.py ./.build/sofle_ble_master_default.hex -c -f 0xADA52840
+	mv flash.uf2 ~/downloads/sofle_master.uf2
+
+sslave:
+	make V=1 sofle_ble/slave
+	python $(UTIL_DIR)/uf2conv.py ./.build/sofle_ble_slave_default.hex -c -f 0xADA52840
+	mv flash.uf2 ~/downloads/sofle_slave.uf2
 
 blink:
 	make V=1 blink_nrf52
