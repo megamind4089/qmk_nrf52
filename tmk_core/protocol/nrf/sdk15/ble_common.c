@@ -106,6 +106,8 @@ void delete_bond_id(uint8_t id) {
   NRF_LOG_INFO("Erase bonds ID: %d", id);
 }
 
+void nrfmicro_power_enable(bool enable);
+
 /**@brief Function for putting the chip into sleep mode.
  *
  * @note This function will not return.
@@ -119,6 +121,8 @@ void sleep_mode_enter(void) {
       nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_READY) {
     return;
   }
+
+  nrfmicro_power_enable(false);
   for (i=0; i<THIS_DEVICE_ROWS; i++) {
     nrf_gpio_pin_clear(row_pins[i]);
   }
