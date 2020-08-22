@@ -156,15 +156,40 @@ bool oled_init(uint8_t rotation) {
         I2C_CMD,
         DISPLAY_OFF,
         DISPLAY_CLOCK,
-        0x80,
+        0x51,
         MULTIPLEX_RATIO,
-        OLED_DISPLAY_HEIGHT - 1,
+        0x3F,
         DISPLAY_OFFSET,
-        0x00,
+        0x20,
+#if (OLED_IC != OLED_IC_SH1106)
         DISPLAY_START_LINE | 0x00,
         CHARGE_PUMP,
         0x14,
-#if (OLED_IC != OLED_IC_SH1106)
+#endif
+
+#if (OLED_IC == OLED_IC_SH1107)
+        // SH1107_PAGE_PAGESTART
+        0xB0,
+        0x00,
+        0x10,
+
+        0xC8,
+        // (SH1107_SETPRECHARGE_2,       0x22);
+        0xD9, 0x22,
+        // (SH1107_SETCOMPINS_2,         0x12);
+        0xDA, 0x12,
+        // (SH1107_SETVCOMLEVEL_2,       0x25);
+        0xDB, 0x25,
+        // (SH1107_DCDC_SETTING_2,       SH1107_DCDC_SETTING_OFF);
+        0xAD, 0x8B,
+        // (SH1107_CONTRAST_CONTROL_2,   0x1F)
+        0x81, 0x1F,
+
+        // SH1107_ADDRESSMODE_PAGE     0x20
+        // SH1107_ADDRESSMODE_VERTICAL 0x21
+        0x20,
+
+#elif (OLED_IC != OLED_IC_SH1106)
         // MEMORY_MODE is unsupported on SH1106 (Page Addressing only)
         MEMORY_MODE,
         0x00,  // Horizontal addressing mode
@@ -175,21 +200,21 @@ bool oled_init(uint8_t rotation) {
         return false;
     }
 
-    if (!HAS_FLAGS(oled_rotation, OLED_ROTATION_180)) {
+    // if (!HAS_FLAGS(oled_rotation, OLED_ROTATION_180)) {
         static uint8_t display_normal[] = {I2C_CMD, SEGMENT_REMAP_INV, COM_SCAN_DEC};
         if (I2C_TRANSMIT_P(display_normal) != I2C_STATUS_SUCCESS) {
             NRF_LOG_INFO("oled_init cmd normal rotation failed\n");
             return false;
         }
-    } else {
-        static uint8_t display_flipped[] = {I2C_CMD, SEGMENT_REMAP, COM_SCAN_INC};
-        if (I2C_TRANSMIT_P(display_flipped) != I2C_STATUS_SUCCESS) {
-            NRF_LOG_INFO("display_flipped failed\n");
-            return false;
-        }
-    }
+    // } else {
+    //     static uint8_t display_flipped[] = {I2C_CMD, SEGMENT_REMAP, COM_SCAN_INC};
+    //     if (I2C_TRANSMIT_P(display_flipped) != I2C_STATUS_SUCCESS) {
+    //         NRF_LOG_INFO("display_flipped failed\n");
+    //         return false;
+    //     }
+    // }
 
-    static uint8_t display_setup2[] = {I2C_CMD, COM_PINS, OLED_COM_PINS, CONTRAST, 0x8F, PRE_CHARGE_PERIOD, 0xF1, VCOM_DETECT, 0x40, DISPLAY_ALL_ON_RESUME, NORMAL_DISPLAY, DEACTIVATE_SCROLL, DISPLAY_ON};
+    static uint8_t display_setup2[] = {I2C_CMD, CONTRAST, 0x1F, DISPLAY_ALL_ON_RESUME, NORMAL_DISPLAY, DISPLAY_ON};
     if (I2C_TRANSMIT_P(display_setup2) != I2C_STATUS_SUCCESS) {
         NRF_LOG_INFO("display_setup2 failed\n");
         return false;
@@ -222,6 +247,15 @@ static void calc_bounds(uint8_t update_start, uint8_t *cmd_array) {
     uint8_t start_page   = OLED_BLOCK_SIZE * update_start / OLED_DISPLAY_WIDTH;
     uint8_t start_column = OLED_BLOCK_SIZE * update_start % OLED_DISPLAY_WIDTH;
 #if (OLED_IC == OLED_IC_SH1106)
+    // Commands for Page Addressing Mode. Sets starting page and column; has no end bound.
+    // Column value must be split into high and low nybble and sent as two commands.
+    cmd_array[0] = PAM_PAGE_ADDR | start_page;
+    cmd_array[1] = PAM_SETCOLUMN_LSB | ((OLED_COLUMN_OFFSET + start_column) & 0x0f);
+    cmd_array[2] = PAM_SETCOLUMN_MSB | ((OLED_COLUMN_OFFSET + start_column) >> 4 & 0x0f);
+    cmd_array[3] = NOP;
+    cmd_array[4] = NOP;
+    cmd_array[5] = NOP;
+#elif (OLED_IC == OLED_IC_SH1107)
     // Commands for Page Addressing Mode. Sets starting page and column; has no end bound.
     // Column value must be split into high and low nybble and sent as two commands.
     cmd_array[0] = PAM_PAGE_ADDR | start_page;
