@@ -123,6 +123,7 @@ void sleep_mode_enter(void) {
   }
 
   nrfmicro_power_enable(false);
+
   for (i=0; i<THIS_DEVICE_ROWS; i++) {
     nrf_gpio_pin_clear(row_pins[i]);
   }

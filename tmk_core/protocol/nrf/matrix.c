@@ -217,6 +217,8 @@ static inline void set_received_key(ble_switch_state_t key, bool from_slave) {
   }
 }
 
+extern void nrfmicro_power_enable(bool);
+
 __attribute__ ((weak))
 uint8_t matrix_scan_impl(matrix_row_t* _matrix){
   uint8_t matrix_offset = isLeftHand ? 0 : MATRIX_ROWS-THIS_DEVICE_ROWS;
@@ -374,6 +376,7 @@ uint8_t matrix_scan_impl(matrix_row_t* _matrix){
     NRF_LOG_DEBUG("NUS send");
     ble_nus_send_bytes((uint8_t*) ble_switch_send, (matrix_changed+1)*sizeof(ble_switch_state_t));
     send_flag = true;
+    nrfmicro_power_enable(true);
   }
 #else
   UNUSED_VARIABLE(ble_switch_send);
