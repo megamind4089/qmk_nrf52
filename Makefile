@@ -582,14 +582,16 @@ git-submodule:
 
 UTIL_DIR := $(ROOT_DIR)util
 
+LILY_KEYMAP := master
+
 master:
-	make V=1 lily58_ble/master
-	python $(UTIL_DIR)/uf2conv.py ./.build/lily58_ble_master_default.hex -c -f 0xADA52840
+	make V=1 lily58_ble/master:$(LILY_KEYMAP)
+	python $(UTIL_DIR)/uf2conv.py ./.build/lily58_ble_master_$(LILY_KEYMAP).hex -c -f 0xADA52840
 	mv flash.uf2 ~/downloads/lily58_master.uf2
 
 slave:
-	make V=1 lily58_ble/slave
-	python $(UTIL_DIR)/uf2conv.py ./.build/lily58_ble_slave_default.hex -c -f 0xADA52840
+	make V=1 lily58_ble/slave:$(LILY_KEYMAP)
+	python $(UTIL_DIR)/uf2conv.py ./.build/lily58_ble_slave_$(LILY_KEYMAP).hex -c -f 0xADA52840
 	mv flash.uf2 ~/downloads/lily58_slave.uf2
 
 smaster:
