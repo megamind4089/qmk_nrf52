@@ -582,7 +582,7 @@ git-submodule:
 
 UTIL_DIR := $(ROOT_DIR)util
 
-LILY_KEYMAP := master
+LILY_KEYMAP := default
 
 master:
 	make V=1 lily58_ble/master:$(LILY_KEYMAP)
