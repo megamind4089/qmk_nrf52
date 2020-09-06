@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keyboard.h"
 #include "printf.h"
 #include "sendchar.h"
+#include "adc.h"
 
 #ifdef RGBLIGHT_ENABLE
 #include "rgblight.h"
@@ -32,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 const uint8_t MAINTASK_INTERVAL=17;
+int adc_counter = 0;
 
 void sendchar_pf(void *p, char c){
   UNUSED_VARIABLE(p);
@@ -49,6 +51,9 @@ static void slave_main_tasks(void* context) {
 #if defined(RGBLIGHT_ENABLE) && defined(RGBLIGHT_ANIMATIONS)
   rgblight_task();
 #endif
+
+  if ((adc_counter++)%250==0)
+    adc_start();
 }
 
 /**@brief Application main function.
@@ -59,6 +64,7 @@ int main(void) {
   timers_init(slave_main_tasks);
 
   usbd_init();
+  adc_init();
 
   ble_stack_init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
