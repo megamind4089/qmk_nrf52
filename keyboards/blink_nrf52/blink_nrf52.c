@@ -47,6 +47,9 @@ void set_pin(int pin, int set) {
     else nrf_gpio_pin_clear(pin);
 }
 
+void nrfmicro_power_enable(bool enable) { return; }
+
+
 void matrix_init_user() {
 
     // blink on power on
@@ -55,8 +58,10 @@ void matrix_init_user() {
     // nrfmicro_charger_enable(true);
     // nrfmicro_power_enable(true);
     nrf_gpio_cfg_output(POWER_PIN);
-    nrf_gpio_pin_write(POWER_PIN, 1);
+    nrf_gpio_pin_write(POWER_PIN, 0);
 
+    nrf_gpio_cfg_output(PROG_PIN);
+    nrf_gpio_pin_clear(PROG_PIN);
 
     int pin_count = sizeof(pins)/sizeof(pins[0]);
 
@@ -82,6 +87,8 @@ void matrix_init_user() {
     }
 
     nrf_gpio_pin_set(LED_PIN);
+
+    sleep_mode_enter();
 
     select_row(3);
     wait_us(50);
