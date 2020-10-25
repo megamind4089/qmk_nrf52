@@ -81,13 +81,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // i2c defines
 #define I2C_CMD 0x00
 #define I2C_DATA 0x40
-#if defined(__AVR__)
-// already defined on ARM
-#    define I2C_TIMEOUT 100
-#    define I2C_TRANSMIT_P(data) i2c_transmit_P(OLED_DISPLAY_ADDRESS, data, sizeof(data), I2C_TIMEOUT)
-#else  // defined(__AVR__)
-#    define I2C_TRANSMIT_P(data) i2c_transmit(OLED_DISPLAY_ADDRESS, data, sizeof(data), I2C_TIMEOUT)
-#endif  // defined(__AVR__)
+#define I2C_TRANSMIT_P(data) i2c_transmit(OLED_DISPLAY_ADDRESS, data, sizeof(data), I2C_TIMEOUT)
 #define I2C_TRANSMIT(data) i2c_transmit(OLED_DISPLAY_ADDRESS, &data[0], sizeof(data), I2C_TIMEOUT)
 #define I2C_WRITE_REG(mode, data, size) i2c_writeReg(OLED_DISPLAY_ADDRESS, mode, data, size, I2C_TIMEOUT)
 
@@ -115,26 +109,6 @@ uint32_t oled_timeout;
 uint32_t oled_scroll_timeout;
 #endif
 
-// Internal variables to reduce math instructions
-
-#if defined(__AVR__)
-// identical to i2c_transmit, but for PROGMEM since all initialization is in PROGMEM arrays currently
-// probably should move this into i2c_master...
-static i2c_status_t i2c_transmit_P(uint8_t address, const uint8_t *data, uint16_t length, uint16_t timeout) {
-    i2c_status_t status = i2c_start(address | I2C_WRITE, timeout);
-
-    for (uint16_t i = 0; i < length && status >= 0; i++) {
-        status = i2c_write(pgm_read_byte((const char *)data++), timeout);
-        if (status) break;
-    }
-
-    i2c_stop();
-
-    return status;
-}
-#endif
-
-// Flips the rendering bits for a character at the current cursor position
 static void InvertCharacter(uint8_t *cursor) {
     const uint8_t *end = cursor + OLED_FONT_WIDTH;
     while (cursor < end) {
@@ -195,10 +169,12 @@ bool oled_init(uint8_t rotation) {
         0x00,  // Horizontal addressing mode
 #endif
     };
-    if (I2C_TRANSMIT_P(display_setup1) != I2C_STATUS_SUCCESS) {
-        NRF_LOG_INFO("oled_init cmd set 1 failed\n");
+    uint8_t stat =  I2C_TRANSMIT_P(display_setup1);
+    if (stat != I2C_STATUS_SUCCESS) {
+        NRF_LOG_INFO("oled_init cmd set 1 failed: %x %d\n", stat, stat);
         return false;
     }
+    NRF_LOG_INFO("oled_init cmd set 1 succeded\n");
 
     // if (!HAS_FLAGS(oled_rotation, OLED_ROTATION_180)) {
         static uint8_t display_normal[] = {I2C_CMD, SEGMENT_REMAP_INV, COM_SCAN_DEC};
@@ -206,6 +182,7 @@ bool oled_init(uint8_t rotation) {
             NRF_LOG_INFO("oled_init cmd normal rotation failed\n");
             return false;
         }
+        NRF_LOG_INFO("oled_init cmd normal rotation succeeded\n");
     // } else {
     //     static uint8_t display_flipped[] = {I2C_CMD, SEGMENT_REMAP, COM_SCAN_INC};
     //     if (I2C_TRANSMIT_P(display_flipped) != I2C_STATUS_SUCCESS) {
@@ -298,7 +275,7 @@ static void rotate_90(const uint8_t *src, uint8_t *dest) {
 
 void oled_render(void) {
     // Do we have work to do?
-    if (!oled_dirty || oled_scrolling) {
+    if (!oled_dirty || oled_scrolling || !oled_initialized) {
         return;
     }
 
@@ -525,7 +502,7 @@ bool oled_on(void) {
     uint8_t display_on[] = {I2C_CMD, DISPLAY_ON};
     if (!oled_active) {
         if (I2C_TRANSMIT_P(display_on) != I2C_STATUS_SUCCESS) {
-            NRF_LOG_INFO("oled_on cmd failed\n");
+            // NRF_LOG_INFO("oled_on cmd failed\n");
             return oled_active;
         }
 
